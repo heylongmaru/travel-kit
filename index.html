@@ -283,7 +283,9 @@ function compressImage(file,maxDim,quality){return new Promise((res,rej)=>{
       res(cv.toDataURL('image/jpeg',quality))};
     img.src=reader.result};
   reader.readAsDataURL(file)})}
-function photosOf(kind,id){const t=T();const arr=kind==='book'?t.bookings:t.qr;const o=arr.find(x=>x.id===id);if(o&&!o.photos)o.photos=[];return o}
+function photosOf(kind,id){const t=T();
+  if(kind==='rgal'){if(!t.restockGallery)t.restockGallery={id:'rgal',photos:[]};return t.restockGallery}
+  const arr=kind==='book'?t.bookings:t.qr;const o=arr.find(x=>x.id===id);if(o&&!o.photos)o.photos=[];return o}
 function photoStripHTML(kind,o){
   const pics=(o.photos||[]).map(pid=>
     `<span class="photowrap"><img class="thumb" data-pid="${pid}" alt="附件" onclick="viewPhoto('${pid}')">`+
@@ -843,7 +845,11 @@ function vGift(){
       :'<p class="empty">還沒有託買項目。</p>';
   }else{
     html+=`<h2>🛍 補貨清單（自己要買的）</h2>
-    <p class="hint">每趟去日本幫自己補的自用品。可套用你的固定清單、每趟重複用，買到打勾、實花一鍵帶入記帳。</p>
+    <div class="formbox" style="margin-bottom:14px">
+      <h2 style="font-size:14px;margin-bottom:2px">📷 拍照記（最快，免打字）</h2>
+      <p class="hint" style="margin:2px 0 0">看到想買的、或你的手寫清單，直接拍起來存這裡。逛街時對著照片買、買到打個勾就好。手機可直接開相機。</p>
+      ${photoStripHTML('rgal',photosOf('rgal'))}</div>
+    <p class="hint" style="margin:0 0 8px">想要「可打勾、可算錢」的文字清單，才需要下面這些：</p>
     <div class="row" style="margin-bottom:8px">
       ${!t.restock.length&&store.restockTemplate.length?`<button class="btn ghost sm" onclick="restockApply()">套用我的固定清單（${store.restockTemplate.length} 項）</button>`:''}
       <button class="btn ghost sm" onclick="toggleRsImport()">📋 批次貼上（一行一項）</button>
