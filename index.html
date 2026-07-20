@@ -216,7 +216,16 @@ function load(){
   if(!store.presetItems) store.presetItems=JSON.parse(JSON.stringify(DEFAULT_PRESET_ITEMS));
   if(!store.restockTemplate) store.restockTemplate=['常備藥','面膜','保養品','防曬','隱形眼鏡保養液','喉糖／龍角散','零食','泡麵','咖啡','調味料'];
 }
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(store))}catch(e){toast('⚠️ 儲存失敗：'+e.message)}}
+function save(isBackupWrite){
+  if(!isBackupWrite){store.lastChangeAt=Date.now();store.changesSinceBackup=(store.changesSinceBackup||0)+1}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(store))}catch(e){toast('⚠️ 儲存失敗：'+e.message)}}
+function daysSince(ms){if(!ms)return null;return Math.floor((Date.now()-ms)/86400000)}
+function shouldBackupNudge(){
+  if(!store.order||!store.order.length)return false;
+  const chg=store.changesSinceBackup||0;
+  if(!store.lastBackupAt)return chg>=12;
+  return chg>=12||daysSince(store.lastBackupAt)>=7;
+}
 function T(){return store.activeId?store.trips[store.activeId]:null}
 function newTrip(name,dest,start,end,memberNames){
   const members=(memberNames||[]).filter(Boolean).map(n=>({id:uid(),name:n,transport:'高鐵',emgContact:'',blood:'',allergy:''}));
@@ -338,6 +347,8 @@ const TABS=[['home','總覽'],['itin','行程'],['book','訂票住宿'],['pack',
   ['gift','採買'],['net','網卡·QR'],['emg','緊急卡'],['stat','統計'],['set','設定']];
 let cur='home';
 let helpOpen=false;
+let backupSnooze=false;
+let pendingImport=null;
 function go(tab){cur=tab;render()}
 function openHelp(){helpOpen=true;go('home')}
 function dismissHelp(){store.onboarded=true;helpOpen=false;save();render()}
@@ -368,8 +379,13 @@ function vHome(){
     html+=`<div class="card" style="border:1.5px solid var(--accent);background:var(--accent-soft)">
       <h2>🧳 歡迎使用！三步驟上手</h2>
       <p class="hint" style="margin:6px 0;color:var(--text)">① 建立一趟旅程（下面填名稱＋日期）→ ② 排行程、記訂房、勾打包 → ③ 旅途中隨手記帳，回來看「統計」自動算誰欠誰。</p>
-      <p class="hint" style="margin:6px 0">📱 手機：用 Safari／Chrome 開，按「分享 → 加入主畫面」，桌面就多一個像 App 的圖示。　🔒 資料只存在你手機，不會上傳。</p>
+      <p class="hint" style="margin:6px 0">📱 手機請用 Safari／Chrome 開 →「分享 → 加入主畫面」（<b>資料比較不會被清掉</b>，又像 App）。🔒 資料只存你手機不上傳，所以<b>偶爾到「設定 → 匯出備份」存一份</b>最保險。</p>
       <button class="btn accent sm" onclick="dismissHelp()">知道了，開始 ✓</button></div>`;
+  }
+  if(shouldBackupNudge()&&!backupSnooze){
+    html+=`<div class="dirty">🗂 ${store.lastBackupAt?daysSince(store.lastBackupAt)+' 天沒備份了':'還沒備份過'}，建議匯出一份留著（換手機或被瀏覽器清掉時才救得回）。
+      <button class="btn accent sm" onclick="exportJSON()">立即備份</button>
+      <button class="icon" onclick="backupSnooze=true;render()">這次先不用</button></div>`;
   }
   /* 旅程切換與建立 */
   html+=`<div class="card"><h2>旅程</h2><div class="row" style="margin-bottom:10px">
@@ -1061,7 +1077,17 @@ function bindChartHover(){
 /* ================= 設定 ================= */
 function vSet(){
   const t=T();
-  let html=`<div class="card"><h2>⚙️ 設定</h2>
+  let html='';
+  if(pendingImport){
+    const inTrips=store.order?store.order.length:0;
+    const impTrips=pendingImport.store.order?pendingImport.store.order.length:0;
+    html+=`<div class="card" style="border:1.5px solid var(--warn);background:var(--warn-soft)">
+      <h2>⚠️ 確認匯入備份</h2>
+      <p class="hint" style="margin:6px 0;color:#7a5410">匯入會<b>用備份取代目前所有資料</b>。目前有 ${inTrips} 趟、備份裡有 ${impTrips} 趟；取代後目前資料就沒了（要保留請先「取消」再匯出）。</p>
+      <div class="row"><button class="btn danger" onclick="applyImport()">確定匯入、取代目前資料</button>
+      <button class="btn ghost" onclick="cancelImport()">取消</button></div></div>`;
+  }
+  html+=`<div class="card"><h2>⚙️ 設定</h2>
     <h2 style="margin-top:8px">📤 分享給親朋好友</h2>
     <p class="hint" style="margin:0 0 8px">傳這個連結給他們，手機點開就能用（各自的資料各自存、互不干擾）。iPhone 用 Safari 開 → 按「分享 → 加入主畫面」，就變成像 App 的圖示。</p>
     <div class="row"><button class="btn accent sm" onclick="shareTool()">📋 複製／分享工具連結</button></div>
@@ -1099,8 +1125,10 @@ function vSet(){
   <div class="row" style="margin-top:8px"><input type="text" id="rtplNew" placeholder="新增自用品（例：面膜）">
   <button class="btn ghost sm" onclick="rtplAdd()">＋ 加入</button></div>
   <div class="divider"></div>
-  <h2>備份／還原</h2><div class="row">
-    <button class="btn ghost sm" onclick="exportJSON()">⬇️ 匯出全部資料（JSON 備份）</button>
+  <h2>備份／還原</h2>
+  <p class="hint" style="margin:0 0 8px">上次備份：${store.lastBackupAt?`${daysSince(store.lastBackupAt)} 天前（${new Date(store.lastBackupAt).toLocaleDateString('zh-TW')}）`:'<b style="color:var(--danger)">尚未備份</b>'}${(store.changesSinceBackup||0)>0?`　·　之後又改了 ${store.changesSinceBackup} 次`:''}</p>
+  <div class="row">
+    <button class="btn accent sm" onclick="exportJSON()">⬇️ 匯出備份（含照片）</button>
     <label class="btn ghost sm" style="display:inline-block">⬆️ 匯入備份<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>
   <p class="hint" style="margin-top:8px">資料（含你存的照片）都在這台裝置。換裝置、給家人裝，就用匯出／匯入——備份檔已包含照片。建議每趟旅行結束匯出一份留存。</p></div>`;
   return html;
@@ -1121,24 +1149,36 @@ function rtplDel(i){store.restockTemplate.splice(i,1);save();render()}
 async function exportJSON(){
   toast('打包中（含照片）…');
   let photos={};try{photos=await photoAll()}catch(e){}
+  store.lastBackupAt=Date.now();store.changesSinceBackup=0;backupSnooze=false;save(true);
   const blob=new Blob([JSON.stringify({_v:'travelkit-backup-1',store,photos})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='travelkit-backup-'+today()+'.json';a.click();toast('已匯出備份（含照片）');
+  a.download='travelkit-backup-'+today()+'.json';a.click();
+  render();toast('✅ 已匯出備份（含照片）');
 }
 function importJSON(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=async()=>{try{const j=JSON.parse(r.result);
+  r.onload=()=>{try{const j=JSON.parse(r.result);
     let s,photos;
     if(j.store&&j.photos!==undefined){s=j.store;photos=j.photos||{}}       /* 新格式：含照片 */
     else if(j.trips&&j.order){s=j;photos={}}                               /* 舊格式：純資料 */
     else throw new Error('不是本工具的備份檔');
-    store=s;save();
-    for(const [pid,d] of Object.entries(photos)){try{await photoPut(pid,d)}catch(e){}}
-    render();toast('已還原備份'+(Object.keys(photos).length?'（含照片）':''))}
-    catch(e){toast('匯入失敗：'+e.message)}};
+    pendingImport={store:s,photos};
+    if(!store.order||!store.order.length){applyImport()}                   /* 目前沒資料→直接匯入 */
+    else{go('set')}                                                        /* 有資料→到設定顯示確認 */
+  }catch(e){toast('匯入失敗：'+e.message)}};
   r.readAsText(f);
 }
+async function applyImport(){
+  if(!pendingImport)return;
+  const s=pendingImport.store,photos=pendingImport.photos||{};pendingImport=null;
+  store=s;save(true);
+  let n=0;for(const [pid,d] of Object.entries(photos)){try{await photoPut(pid,d);n++}catch(e){}}
+  render();
+  const trips=store.order?store.order.length:0;
+  toast(`✅ 已還原：${trips} 趟旅程${n?`、${n} 張照片`:''}`);
+}
+function cancelImport(){pendingImport=null;render();toast('已取消匯入')}
 /* ================= 分享頁匯出 ================= */
 function exportShare(){
   const t=T(),withMoney=document.getElementById('shareMoney').checked;
@@ -1169,6 +1209,8 @@ function exportShare(){
 }
 /* ================= 啟動 ================= */
 load();render();
+/* 向瀏覽器要「持久儲存」，降低資料被自動清掉的機會（Android／電腦有效） */
+if(navigator.storage&&navigator.storage.persist){navigator.storage.persist().catch(()=>{})}
 </script>
 </body>
 </html>
