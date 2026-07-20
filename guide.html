@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>出國旅遊小工具・操作說明</title>
+<style>
+:root{--ink:#1f2a33;--text:#2a3340;--muted:#6b7683;--line:#dbe1df;--bg:#eef1ef;--card:#fff;
+--accent:#2c6e7f;--accent-soft:#e3eef0;--warn:#b5761a;--warn-soft:#f6ecd9;
+--radius:12px;--radius-sm:8px;--shadow:0 1px 2px rgba(31,42,51,.06),0 8px 24px rgba(31,42,51,.06);
+--font:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;font-family:var(--font);color:var(--text);background:var(--bg);
+line-height:1.75;font-size:15px}
+.wrap{max-width:760px;margin:0 auto;padding:22px 16px 96px}
+h1{font-size:24px;font-weight:800;color:var(--ink);margin:6px 0 8px}
+h2{font-size:16px;font-weight:800;color:var(--ink);margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);font-weight:700;text-transform:uppercase}
+.muted{color:var(--muted)}.hint{color:var(--muted);font-size:13px}
+code,pre{background:var(--accent-soft);border-radius:6px;font-size:13px;padding:1px 6px}
+pre{padding:12px;overflow-x:auto;line-height:1.5}
+.warnbox{background:var(--warn-soft);border:1px solid #e6d3ad;color:#7a5410;border-radius:var(--radius-sm);
+padding:10px 14px;font-size:14px;font-weight:600;margin:10px 0}
+ol,ul{padding-left:22px}li{margin-bottom:6px}
+a{color:var(--accent)}
+</style>
+</head>
+<body><div class="wrap">
+<div class="eyebrow">Travel Kit Guide</div>
+<h1>🧳 出國旅遊小工具・操作說明</h1>
+<p class="muted">一個檔案搞定：行前規劃 → 旅途隨身 → 回顧結算。給自己與同行家人朋友用。</p>
+
+<div class="card"><h2>🚀 快速上手（3 步驟）</h2>
+<ol>
+<li>打開 <code>index.html</code> → 在「總覽」建立旅程：名稱、日期、成員（例：我, 媽, 妹）。</li>
+<li>行前：排「行程」、記「訂票住宿」、勾「打包」。</li>
+<li>旅途中：總覽看「今天」、隨手「快速記帳」；回來看「統計」直接算好誰給誰多少。</li>
+</ol></div>
+
+<div class="card"><h2>📱 手機怎麼用（重要）</h2>
+<p>把 <code>index.html</code> 存到手機的「檔案」App，用 <b>Safari／Chrome 直接開啟</b>再使用。</p>
+<div class="warnbox">⚠️ 資料存在「開啟它的那個瀏覽器」裡。從 LINE 的內建視窗打開，資料可能不會保留——請先存到檔案 App 再開。換裝置或怕遺失，就用「設定 → 匯出備份 JSON」。</div></div>
+
+<div class="card"><h2>🗓 行程</h2>
+<ul>
+<li>每天分「上午／下午／晚上」，有預約的再填精確時間；沒排的天會標「待規劃」。</li>
+<li><b>請 Claude 幫你排：</b>按「複製指令」→ 貼到 Claude 對話，附上你的零散資料（訊息、備忘錄）→ 把 Claude 回的 JSON 貼進「匯入」。格式範例：</li>
+</ul>
+<pre>[{"date":"2026-08-01","slot":"morning","time":"",
+  "name":"淺草寺","place":"東京都台東區","map":"https://…",
+  "trans":"銀座線 淺草站","cost":0,"book":"","note":""}]</pre></div>
+
+<div class="card"><h2>✈️ 訂票住宿＋附件約定</h2>
+<ul>
+<li>每筆有狀態：<b>已訂／待訂／比較中</b>——還沒決定的也先記一筆，才不會忘。</li>
+<li>住宿記得填「地址（當地語言）」，給司機看超好用。</li>
+<li>確認信（Email PDF、截圖）統一丟進 <code>03-travel-kit/trips/這趟旅程名/</code> 資料夾，工具內記「確認編號＋檔名」即可。</li>
+</ul></div>
+
+<div class="card"><h2>🧳 打包（三段式）</h2>
+<ul>
+<li><b>待買：</b>出發前要買還沒買的。</li>
+<li><b>打包（分人）：</b>每人一鍵套用模板（來自你的「出國行李清單」，含「帶幾件」數量欄），可自行加項目。</li>
+<li><b>出門前檢查：</b>門窗、冷氣、插頭、垃圾、寵物與牠的食物水——出發當天勾完再出門。出發交通每人可設「高鐵／接送／叫車」，高鐵在出發前 3–5 天會於總覽自動提醒買票。</li>
+</ul></div>
+
+<div class="card"><h2>💴 記帳・分帳・匯率</h2>
+<ul>
+<li>輸入日幣自動換台幣；刷卡的筆可切「台幣」直接記。</li>
+<li>分類用點的（甜點、御朱印…），可在「設定」自訂。</li>
+<li>每筆可勾「誰參與」（預設全員均分）、選「誰付的」；結算表自動算出<b>誰給誰多少</b>。</li>
+<li>匯率：有網路時按「抓即時匯率」（會存起來離線用）；沒網路用手動匯率。</li>
+</ul></div>
+
+<div class="card"><h2>🎁 伴手禮／📶 網卡／🛂 入境 QR／🆘 緊急卡</h2>
+<ul>
+<li>伴手禮：記誰託買、預算、實花，一鍵帶入記帳。</li>
+<li>網卡：選「誰負責買全部人的」，每張卡記方案與開通方式，設定步驟寫一次大家共用。</li>
+<li>入境 QR：Visit Japan Web 等連結集中放，QR 截圖放這趟的附件資料夾。</li>
+<li>緊急卡：日本官方電話已預填（查證日期 2026-07-20，出發前請再核對官網）；保險、掛失、每人緊急聯絡人自填，可「列印／存 PDF」隨身帶。</li>
+</ul></div>
+
+<div class="card"><h2>📤 分享給同行的人</h2>
+<p>統計頁 →「產生唯讀分享頁」→ 得到一個 HTML 檔，傳 LINE 群組或放雲端即可。預設只含行程＋訂票住宿；勾「包含記帳與統計」才會有錢的部分。</p>
+<p class="hint">本工具採「一人維護、大家看」：資料由一台裝置維護，分享頁給大家看，避免多人同時改造成資料打架。</p></div>
+
+<div class="card"><h2>💾 資料與備份</h2>
+<ul>
+<li>資料只存在你這台裝置的瀏覽器，<b>不會上傳任何地方</b>（含護照等敏感資訊）。</li>
+<li>「設定 → 匯出備份 JSON」：換裝置、給家人裝、每趟旅程結束歸檔，都用它。</li>
+<li>建議：旅程結束後把備份 JSON 也丟進 <code>trips/這趟旅程名/</code>，跟確認信放一起。</li>
+</ul></div>
+
+<p class="hint">出國旅遊小工具 v1・2026-07-20｜APPs 工作區 03 號工具｜視覺依 _design-system v1</p>
+</div></body>
+</html>

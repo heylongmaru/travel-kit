@@ -1,0 +1,7 @@
+# 個資紅線：以下絕不進 repo
+trips/
+_history/
+_NOTES.md
+*.json
+*分享頁*.html
+*backup*

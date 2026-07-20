@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2c6e7f">
+<title>出國旅遊小工具 Travel Kit</title>
+<style>
+/* ============ 內嵌 _design-system/design-system.css v1（工作區共用） ============ */
+:root{
+  --ink:#1f2a33; --text:#2a3340; --muted:#6b7683; --line:#dbe1df;
+  --bg:#eef1ef; --card:#ffffff;
+  --accent:#2c6e7f; --accent-soft:#e3eef0;
+  --ok:#2e7d5b; --ok-soft:#e2f0e9;
+  --warn:#b5761a; --warn-soft:#f6ecd9;
+  --danger:#b4453c; --danger-soft:#f4e0dd;
+  --radius:12px; --radius-sm:8px; --radius-lg:14px; --radius-pill:999px;
+  --shadow:0 1px 2px rgba(31,42,51,.06),0 8px 24px rgba(31,42,51,.06);
+  --shadow-hover:0 6px 18px rgba(23,40,58,.08);
+  --wrap:1040px; --wrap-narrow:760px;
+  --font:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,system-ui,sans-serif;
+  /* 圖表色盤（六項檢查通過，光模式 surface #fff）：類別固定順序、不循環 */
+  --c1:#0e8aa6; --c2:#d0762a; --c3:#9155c9; --c4:#cc4f6d; --c5:#476cd6; --c-other:#6b7683;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.6;
+  font-size:15px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+  word-break:break-word;overflow-wrap:anywhere}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:22px 16px 96px}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--accent);font-weight:700;text-transform:uppercase}
+h1{font-size:27px;font-weight:800;letter-spacing:-.01em;margin:6px 0 8px;color:var(--ink)}
+h2{font-size:16px;font-weight:800;color:var(--ink);margin:0 0 4px}
+.lede{font-size:14.5px;color:var(--muted);max-width:46ch;line-height:1.6}
+.hint{color:var(--muted);font-size:13px;margin:0 0 16px}
+.muted{color:var(--muted)}
+a{color:var(--accent)}
+header.app{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  padding:6px 2px 16px;border-bottom:2px solid var(--ink);margin-bottom:14px}
+header.app h1{font-size:22px;letter-spacing:.5px;margin:0}
+header.app .sub{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.tab{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--muted);
+  padding:9px 15px;border-radius:var(--radius-pill);cursor:pointer;font-size:15px;
+  font-weight:700;transition:all .15s;font-family:inherit}
+.tab:hover{border-color:var(--accent);color:var(--accent)}
+.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.btn,.btn{font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;
+  border:1px solid var(--ink);background:var(--ink);color:#fff;padding:10px 18px;
+  border-radius:var(--radius-sm);transition:all .15s}
+.btn:hover{opacity:.9}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn.accent{background:var(--accent);border-color:var(--accent)}
+.btn.ok{background:var(--ok);border-color:var(--ok)}
+.btn.warn{background:#fff;border-color:var(--warn);color:var(--warn)}
+.btn.danger{background:#fff;border-color:var(--danger);color:var(--danger)}
+.btn.lg{font-size:17px;padding:13px 26px}
+.btn.sm{font-size:14px;padding:6px 12px}
+button.icon,.icon{border:1px solid var(--line);background:#fff;color:var(--muted);
+  border-radius:6px;cursor:pointer;padding:4px 9px;font-size:13px;font-family:inherit;transition:all .12s}
+.icon:hover{border-color:var(--accent);color:var(--accent)}
+.icon.danger:hover{border-color:var(--danger);color:var(--danger)}
+.icon.confirm{border-color:var(--danger);color:#fff;background:var(--danger)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+label.field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:600}
+input[type=text],input[type=date],input[type=number],input[type=month],input[type=time],input[type=url],select,textarea{
+  font-family:inherit;font-size:15px;color:var(--text);border:1px solid var(--line);
+  border-radius:var(--radius-sm);padding:9px 11px;background:#fff;min-width:120px;max-width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+textarea{min-width:280px;min-height:90px;resize:vertical;line-height:1.5}
+.switch{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);font-weight:600;cursor:pointer}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:700}
+.chip{display:inline-block;padding:2px 9px;border-radius:var(--radius-pill);font-size:12px;
+  font-weight:600;background:var(--bg);color:var(--muted);border:1px solid var(--line);margin:2px 3px 2px 0}
+.chip.cls{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.chip.btnchip{cursor:pointer}
+.chip.btnchip:hover{border-color:var(--accent);color:var(--accent)}
+.badge{display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:700}
+.badge.auto{background:var(--accent-soft);color:var(--accent)}
+.badge.manual{background:var(--warn-soft);color:var(--warn)}
+.badge.none{background:var(--danger-soft);color:var(--danger)}
+.badge.okb{background:var(--ok-soft);color:var(--ok)}
+.notice{padding:12px 15px;border:1.5px solid #e2b4b4;background:#fdf2f2;border-radius:11px;
+  color:#c0392b;font-size:13.5px;line-height:1.7;font-weight:600;margin:0 0 20px}
+.dirty{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--warn-soft);
+  border:1px solid #e6d3ad;color:#7a5410;border-radius:var(--radius-sm);
+  padding:10px 14px;font-size:14px;font-weight:600;margin-bottom:12px}
+.empty{color:var(--muted);font-size:14px;padding:12px 2px}
+.divider{height:1px;background:var(--line);margin:16px 0}
+.kpi{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:10px}
+.kpi div b{display:block;font-size:22px;color:var(--ink)}
+.kpi div span{font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);
+  color:#fff;padding:11px 20px;border-radius:var(--radius-pill);font-size:14px;font-weight:600;
+  box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}header.app h1{font-size:19px}}
+@media print{.tabs,.no-print,header.app .sub{display:none!important}body{background:#fff}
+  .card{box-shadow:none;border-color:#ccc}}
+/* ============ 本工具追加樣式 ============ */
+.item{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.item .grow{flex:1;min-width:0}
+.item .t{font-weight:700;color:var(--ink)}
+.item .s{font-size:13px;color:var(--muted)}
+.daycard{margin-bottom:14px}
+.dayhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.dayhead b{font-size:15px;color:var(--ink)}
+.slotlbl{font-size:12px;font-weight:700;color:var(--accent);margin:8px 0 2px}
+.checkline{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px dashed var(--line)}
+.checkline:last-child{border-bottom:none}
+.checkline input[type=checkbox]{width:19px;height:19px;accent-color:var(--accent);flex:none}
+.checkline.done .lbl{text-decoration:line-through;color:var(--muted)}
+.checkline .lbl{flex:1}
+.checkline .qty{width:58px;min-width:58px;padding:4px 7px;font-size:13px}
+.packcat{font-size:13px;font-weight:800;color:var(--ink);background:var(--bg);
+  padding:5px 10px;border-radius:var(--radius-sm);margin:14px 0 4px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:8px 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.tooltip{position:fixed;background:var(--ink);color:#fff;font-size:12.5px;padding:6px 10px;
+  border-radius:8px;pointer-events:none;z-index:60;display:none;font-weight:600;white-space:nowrap}
+.bar:hover,.slice:hover{opacity:.82;cursor:pointer}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.subtab{border:1px solid var(--line);background:#fff;color:var(--muted);padding:6px 12px;
+  border-radius:var(--radius-pill);cursor:pointer;font-size:13.5px;font-weight:700;font-family:inherit}
+.subtab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.big-add{position:sticky;bottom:14px;display:flex;justify-content:flex-end;pointer-events:none}
+.formbox{background:var(--accent-soft);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:14px}
+.formbox h2{margin-bottom:8px}
+.right{margin-left:auto}
+.nowrap{white-space:nowrap}
+.money{font-weight:800;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="app">
+    <h1>🧳 出國旅遊小工具</h1>
+    <span class="sub">行前規劃 × 旅途隨身 × 回顧結算</span>
+    <span class="right muted" id="tripBadge" style="font-size:13px;font-weight:700"></span>
+  </header>
+  <nav class="tabs" id="tabs"></nav>
+  <main id="view"></main>
+</div>
+<div class="toast" id="toast"></div>
+<div class="tooltip" id="tooltip"></div>
+<script>
+'use strict';
+/* ================= 資料層 ================= */
+const LS_KEY='travelkit-v1';
+const uid=()=> 't'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const DEFAULT_CATS=['餐飲','甜點','御朱印','交通','住宿','門票','購物','伴手禮','其他'];
+const CHART_COLORS=['#0e8aa6','#d0762a','#9155c9','#cc4f6d','#476cd6'];
+const OTHER_COLOR='#6b7683';
+const SLOTS=[['morning','上午'],['afternoon','下午'],['evening','晚上']];
+/* 打包模板：來自使用者的「出國行李清單 V1」docx（qty=true 表示有「穿一帶＿」數量欄） */
+const PACK_TEMPLATE=[
+ ['衣物・基本服',[['內衣',1],['內褲',1],['睡衣',0],['睡褲',0],['襪子',1]]],
+ ['衣物・外出服',[['T-Shirts',1],['背心',1],['長褲',1],['短褲',1],['薄外套',0],['髒衣服袋子',0]]],
+ ['衣物・鞋子及配件',[['拖鞋／涼鞋',0],['運動鞋',0],['皮帶',0],['太陽眼鏡',0],['隱形眼鏡',0],['髮叉',0]]],
+ ['盥洗＆化妝保養',[['毛巾',0],['棉花棒',0],['牙線棒',0],['化妝棉',0],['衛生紙',0],['濕紙巾',0],
+   ['眼藥水／人工淚液',0],['洗面乳',0],['卸妝油、卸妝棉',0],['化妝用品',0],['化妝水',0],['乳液',0],
+   ['防曬',0],['護唇膏',0],['美髮用品（髮捲、油）',0],['梳子',0],['指甲剪',0],['個人常備藥品',0],
+   ['暈機藥',0],['綿綿',0],['OK繃',0],['痠痛藥膏',0],['痘痘貼、痘痘藥',0],['酒精',0]]],
+ ['證件＆文件',[['護照',0],['機票',0],['護照影本',0],['身分證影本',0],['訂房資料',0],
+   ['保險影本（旅平／不便）',0],['備用護照照片（2吋×2）',0]]],
+ ['財務',[['錢包（大＆小）',0],['外幣現金',0],['Visa 卡、信用卡',0],['台幣現金',0],['悠遊卡、ICOCA',0]]],
+ ['雜物／文具',[['家裡鑰匙',0],['筆記本（印章本）',0],['筆、立可帶',0],['L夾',0],['御朱印帳',0]]],
+ ['袋／包',[['摺疊購物袋',0],['摺疊行李袋',0],['密封袋',0],['空的束口袋＆衣物收納袋',0],['手機防水袋',0]]],
+ ['洗衣',[['洗衣精',0],['衣架、衣夾',0],['洗衣袋',0],['眼鏡布',0],['裝眼鏡袋子',0]]],
+ ['3C 用品',[['手機充電線（＋手錶線）',0],['機上充電 TypeA',0],['USB 插頭',0],['行動電源',0],
+   ['延長線',0],['iPad',0],['手錶',0],['網卡',0],['行李秤＋電池',0]]],
+ ['其他＆備用',[['雨衣、雨傘',0],['防蚊貼',0],['耳機',0],['涼涼',0],['小型手電筒',0],['水瓶',0]]]
+];
+const HOME_CHECK_DEFAULT=['寵物安置確認','寵物的食物與水備足','倒垃圾','拔插頭（電器）','額外該收的雜物收好','門窗上鎖','冷氣關閉'];
+let store=null;
+function load(){
+  try{store=JSON.parse(localStorage.getItem(LS_KEY))||null}catch(e){store=null}
+  if(!store) store={trips:{},order:[],activeId:null,cats:DEFAULT_CATS.slice()};
+  if(!store.cats||!store.cats.length) store.cats=DEFAULT_CATS.slice();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(store))}catch(e){toast('⚠️ 儲存失敗：'+e.message)}}
+function T(){return store.activeId?store.trips[store.activeId]:null}
+function newTrip(name,dest,start,end,memberNames){
+  const members=(memberNames||[]).filter(Boolean).map(n=>({id:uid(),name:n,transport:'高鐵',emgContact:'',blood:'',allergy:''}));
+  const t={id:uid(),name,dest:dest||'日本',currency:'JPY',start,end,members,
+    itin:{},bookings:[],packBuy:[],pack:{},homeCheck:HOME_CHECK_DEFAULT.map(x=>({id:uid(),item:x,done:false})),
+    exp:[],rate:{manual:0.21,live:null,liveAt:null,use:'manual'},gifts:[],
+    sim:{buyerId:members[0]?members[0].id:'',rows:[],setup:''},
+    qr:[{id:uid(),name:'Visit Japan Web（入境手續）',url:'https://www.vjw.digital.go.jp/',note:'入境前先在網站完成登錄，QR 截圖也放這趟的附件資料夾'}],
+    emg:{ins:'',insTel:'',cardLoss:'',notes:''}};
+  store.trips[t.id]=t;store.order.push(t.id);store.activeId=t.id;save();return t;
+}
+function tripDays(t){
+  if(!t.start||!t.end)return[];
+  const out=[];let d=new Date(t.start+'T00:00:00');const end=new Date(t.end+'T00:00:00');
+  let guard=0;
+  while(d<=end&&guard<60){out.push(d.toISOString().slice(0,10));d=new Date(d.getTime()+86400000);guard++}
+  return out;
+}
+function rate(t){return t.rate.use==='live'&&t.rate.live?t.rate.live:(t.rate.manual||0)}
+function expTWD(t,e){return e.mode==='twd'?(+e.amt||0):Math.round((+e.amt||0)*rate(t))}
+function fmt(n){return (Math.round(n)).toLocaleString('zh-TW')}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function today(){return new Date().toISOString().slice(0,10)}
+function catColor(cat){
+  const i=store.cats.indexOf(cat);
+  return i>=0&&i<CHART_COLORS.length?CHART_COLORS[i]:OTHER_COLOR;
+}
+function memColor(t,mid){
+  const i=t.members.findIndex(m=>m.id===mid);
+  return i>=0&&i<CHART_COLORS.length?CHART_COLORS[i]:OTHER_COLOR;
+}
+/* ================= 共用 UI ================= */
+let toastTimer=null;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200)}
+let pendingDel=null;
+function del2(btn,fn){ /* 兩段式刪除：第一次點變紅要求確認，3 秒內再點才執行 */
+  if(pendingDel&&pendingDel.btn===btn){clearTimeout(pendingDel.t);pendingDel=null;fn();return}
+  if(pendingDel){pendingDel.btn.classList.remove('confirm');pendingDel.btn.textContent=pendingDel.txt;clearTimeout(pendingDel.t)}
+  const txt=btn.textContent;btn.classList.add('confirm');btn.textContent='確定刪除？';
+  pendingDel={btn,txt,t:setTimeout(()=>{btn.classList.remove('confirm');btn.textContent=txt;pendingDel=null},3000)};
+}
+const TABS=[['home','總覽'],['itin','行程'],['book','訂票住宿'],['pack','打包'],['exp','記帳分帳'],
+  ['gift','伴手禮'],['net','網卡·QR'],['emg','緊急卡'],['stat','統計'],['set','設定']];
+let cur='home';
+function go(tab){cur=tab;render()}
+function render(){
+  const t=T();
+  document.getElementById('tabs').innerHTML=TABS.map(([k,l])=>
+    `<button class="tab ${cur===k?'active':''}" onclick="go('${k}')">${l}</button>`).join('');
+  document.getElementById('tripBadge').textContent=t?`${t.name}｜${t.dest}`:'尚未建立旅程';
+  const v=document.getElementById('view');
+  if(!t&&cur!=='set'&&cur!=='home'){v.innerHTML=noTripHTML();return}
+  const fn={home:vHome,itin:vItin,book:vBook,pack:vPack,exp:vExp,gift:vGift,net:vNet,emg:vEmg,stat:vStat,set:vSet}[cur];
+  v.innerHTML=fn();
+  if(cur==='stat')bindChartHover();
+}
+function noTripHTML(){return `<div class="card"><h2>還沒有旅程</h2>
+  <p class="hint">先到「總覽」建立一趟旅程，所有功能就會開起來。</p>
+  <button class="btn accent" onclick="go('home')">去建立旅程</button></div>`}
+/* ================= 總覽 ================= */
+function vHome(){
+  const t=T();
+  let html='';
+  /* 旅程切換與建立 */
+  html+=`<div class="card"><h2>旅程</h2><div class="row" style="margin-bottom:10px">
+    <label class="field">目前旅程<select onchange="switchTrip(this.value)">
+      ${store.order.map(id=>`<option value="${id}" ${id===store.activeId?'selected':''}>${esc(store.trips[id].name)}</option>`).join('')}
+      <option value="">（選擇）</option></select></label>
+    ${t?`<button class="icon danger" onclick="del2(this,()=>removeTrip())">刪除此旅程</button>`:''}
+  </div>
+  <div class="formbox"><h2>＋ 建立新旅程</h2><div class="row">
+    <label class="field">名稱<input type="text" id="ntName" placeholder="2026 夏・東京"></label>
+    <label class="field">目的地<input type="text" id="ntDest" value="日本"></label>
+    <label class="field">出發<input type="date" id="ntStart"></label>
+    <label class="field">回程<input type="date" id="ntEnd"></label>
+    <label class="field">成員（逗號分隔）<input type="text" id="ntMem" placeholder="我, 媽, 妹"></label>
+    <button class="btn accent" onclick="addTrip()">建立</button></div>
+    <p class="hint" style="margin:8px 0 0">成員之後可在「設定」增減；2～4 人、每次不同都沒問題。</p></div></div>`;
+  if(!t)return html;
+  /* 倒數與提醒 */
+  const d0=new Date(today()+'T00:00:00'),ds=new Date(t.start+'T00:00:00');
+  const diff=Math.round((ds-d0)/86400000);
+  const days=tripDays(t);
+  const inTrip=days.includes(today());
+  const pendingBook=t.bookings.filter(b=>b.status!=='已訂').length;
+  const buyLeft=t.packBuy.filter(x=>!x.done).length;
+  const hsrNeeded=t.members.some(m=>m.transport==='高鐵')&&diff>=0&&diff<=5;
+  html+=`<div class="card"><div class="kpi">
+    <div><b>${diff>0?diff+' 天':(inTrip?'旅途中':'已結束')}</b><span>${diff>0?'距離出發':'狀態'}</span></div>
+    <div><b>${days.length}</b><span>天數</span></div>
+    <div><b>${t.members.length}</b><span>成員</span></div>
+    <div><b>NT$ ${fmt(t.exp.reduce((s,e)=>s+expTWD(t,e),0))}</b><span>目前總花費</span></div></div>
+  ${hsrNeeded?`<div class="dirty">🚄 出發前 3–5 天了——該買高鐵票！（成員中有人搭高鐵）</div>`:''}
+  ${diff>=0&&diff<=5&&t.members.some(m=>m.transport==='接送'||m.transport==='叫車')?`<div class="dirty">🚗 有成員要接送／叫車，記得先預約。</div>`:''}
+  ${pendingBook?`<div class="dirty">📋 還有 <b>${pendingBook}</b> 筆訂票／住宿未完成（待訂或比較中）→ <a href="javascript:go('book')">去處理</a></div>`:''}
+  ${buyLeft?`<div class="dirty">🛒 待買清單還有 <b>${buyLeft}</b> 項沒買 → <a href="javascript:go('pack')">去看看</a></div>`:''}
+  </div>`;
+  /* 今天行程 */
+  const focusDay=inTrip?today():days[0];
+  if(focusDay){
+    const list=(t.itin[focusDay]||[]);
+    html+=`<div class="card"><h2>${inTrip?'📍 今天':'第一天預覽'}（${focusDay}）</h2>`;
+    html+=list.length?itinDayHTML(t,focusDay,false):`<p class="empty">這天還是「待規劃」——到「行程」頁排一下，或把想法丟給 Claude 幫你排。</p>`;
+    html+=`</div>`;
+  }
+  /* 快速記帳 */
+  html+=`<div class="card"><h2>⚡ 快速記帳</h2>${expFormHTML(t)}</div>`;
+  return html;
+}
+function addTrip(){
+  const name=document.getElementById('ntName').value.trim();
+  const start=document.getElementById('ntStart').value,end=document.getElementById('ntEnd').value;
+  if(!name||!start||!end){toast('名稱、出發、回程都要填');return}
+  if(end<start){toast('回程不能早於出發');return}
+  newTrip(name,document.getElementById('ntDest').value.trim(),start,end,
+    document.getElementById('ntMem').value.split(/[,，、]/).map(s=>s.trim()));
+  toast('旅程已建立');render();
+}
+function switchTrip(id){if(id){store.activeId=id;save();render()}}
+function removeTrip(){const id=store.activeId;delete store.trips[id];
+  store.order=store.order.filter(x=>x!==id);store.activeId=store.order[0]||null;save();toast('已刪除');render()}
+/* ================= 行程 ================= */
+let itinEdit=null; /* {day,id} */
+function vItin(){
+  const t=T(),days=tripDays(t);
+  let html=`<div class="card"><h2>行程總表</h2>
+  <p class="hint">沒排的天會標「待規劃」。可手動新增，也可以把零散資料（截圖文字、備忘錄）丟給 Claude 排好後，用下面的「匯入」一次貼進來。</p>
+  <div class="row"><button class="btn ghost sm" onclick="toggleImport()">📥 匯入 Claude 排的行程</button>
+  <button class="icon" onclick="copyPrompt()">複製「請 Claude 排行程」指令</button></div>
+  <div id="importBox" style="display:none;margin-top:10px">
+    <textarea id="importTa" placeholder='貼上 JSON，格式：[{"date":"2026-08-01","slot":"morning","time":"","name":"淺草寺","place":"東京都台東區","map":"https://...","trans":"銀座線 淺草站","cost":0,"note":""}]'></textarea>
+    <div class="row" style="margin-top:6px"><button class="btn accent sm" onclick="doImport()">匯入</button></div></div></div>`;
+  days.forEach((d,i)=>{
+    const list=t.itin[d]||[];
+    html+=`<div class="card daycard"><div class="dayhead"><b>Day ${i+1}｜${d}（${'日一二三四五六'[new Date(d+'T00:00:00').getDay()]}）</b>
+      ${list.length?'':'<span class="badge manual">待規劃</span>'}
+      ${d===today()?'<span class="badge okb">今天</span>':''}
+      <button class="icon right" onclick="itinFormShow('${d}')">＋ 新增</button></div>
+      <div id="if-${d}"></div>${itinDayHTML(t,d,true)}</div>`;
+  });
+  if(!days.length)html+=`<div class="card empty">請先在「總覽」把旅程日期設定好。</div>`;
+  return html;
+}
+function itinDayHTML(t,d,editable){
+  const list=(t.itin[d]||[]);
+  if(!list.length)return'';
+  let html='';
+  SLOTS.forEach(([slot,lbl])=>{
+    const items=list.filter(x=>x.slot===slot);
+    if(!items.length)return;
+    html+=`<div class="slotlbl">${lbl}</div>`;
+    items.forEach(x=>{
+      html+=`<div class="item"><div class="grow">
+        <div class="t">${x.time?`<span class="nowrap">${esc(x.time)}</span>　`:''}${esc(x.name)}
+          ${x.book?`<span class="badge okb">已預約</span>`:''}</div>
+        <div class="s">${x.place?esc(x.place)+'　':''}${x.map?`<a href="${esc(x.map)}" target="_blank">地圖</a>　`:''}
+          ${x.trans?`🚃 ${esc(x.trans)}　`:''}${x.cost?`💴 約 ${fmt(x.cost)} ${t.currency}　`:''}${x.note?esc(x.note):''}</div></div>
+        ${editable?`<button class="icon" onclick="itinFormShow('${d}','${x.id}')">✎</button>
+        <button class="icon danger" onclick="del2(this,()=>itinDel('${d}','${x.id}'))">✕</button>`:''}</div>`;
+    });
+  });
+  return html;
+}
+function itinFormShow(d,id){
+  itinEdit={day:d,id:id||null};
+  const t=T(),x=id?(t.itin[d]||[]).find(i=>i.id===id):{};
+  document.querySelectorAll('[id^="if-"]').forEach(el=>el.innerHTML='');
+  document.getElementById('if-'+d).innerHTML=`<div class="formbox"><div class="row">
+    <label class="field">時段<select id="iiSlot">${SLOTS.map(([v,l])=>`<option value="${v}" ${x.slot===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    <label class="field">時間（選填，有預約再填）<input type="time" id="iiTime" value="${esc(x.time||'')}"></label>
+    <label class="field">名稱*<input type="text" id="iiName" value="${esc(x.name||'')}" placeholder="淺草寺"></label>
+    <label class="field">地點<input type="text" id="iiPlace" value="${esc(x.place||'')}"></label></div>
+    <div class="row" style="margin-top:8px">
+    <label class="field">地圖連結<input type="url" id="iiMap" value="${esc(x.map||'')}" placeholder="Google Maps 分享連結"></label>
+    <label class="field">交通方式<input type="text" id="iiTrans" value="${esc(x.trans||'')}" placeholder="銀座線 → 淺草站 1 號出口"></label>
+    <label class="field">預估費用（${T().currency}）<input type="number" id="iiCost" value="${x.cost||''}"></label>
+    <label class="field">訂位資訊<input type="text" id="iiBook" value="${esc(x.book||'')}" placeholder="18:00 兩位，訂位碼 XXX"></label>
+    <label class="field">備註<input type="text" id="iiNote" value="${esc(x.note||'')}"></label>
+    <button class="btn accent" onclick="itinSave()">${id?'更新':'加入'}</button>
+    <button class="btn ghost" onclick="render()">取消</button></div></div>`;
+}
+function itinSave(){
+  const t=T(),{day,id}=itinEdit;
+  const obj={id:id||uid(),slot:document.getElementById('iiSlot').value,
+    time:document.getElementById('iiTime').value,name:document.getElementById('iiName').value.trim(),
+    place:document.getElementById('iiPlace').value.trim(),map:document.getElementById('iiMap').value.trim(),
+    trans:document.getElementById('iiTrans').value.trim(),cost:+document.getElementById('iiCost').value||0,
+    book:document.getElementById('iiBook').value.trim(),note:document.getElementById('iiNote').value.trim()};
+  if(!obj.name){toast('名稱必填');return}
+  t.itin[day]=t.itin[day]||[];
+  if(id){const i=t.itin[day].findIndex(x=>x.id===id);t.itin[day][i]=obj}else t.itin[day].push(obj);
+  const order={morning:0,afternoon:1,evening:2};
+  t.itin[day].sort((a,b)=>order[a.slot]-order[b.slot]||(a.time||'99').localeCompare(b.time||'99'));
+  save();render();toast('已儲存');
+}
+function itinDel(d,id){const t=T();t.itin[d]=t.itin[d].filter(x=>x.id!==id);save();render()}
+function toggleImport(){const b=document.getElementById('importBox');b.style.display=b.style.display==='none'?'block':'none'}
+function doImport(){
+  const t=T();
+  try{
+    const arr=JSON.parse(document.getElementById('importTa').value);
+    if(!Array.isArray(arr))throw new Error('要是陣列');
+    let n=0;
+    arr.forEach(r=>{if(!r.date||!r.name)return;
+      t.itin[r.date]=t.itin[r.date]||[];
+      t.itin[r.date].push({id:uid(),slot:['morning','afternoon','evening'].includes(r.slot)?r.slot:'morning',
+        time:r.time||'',name:r.name,place:r.place||'',map:r.map||'',trans:r.trans||'',
+        cost:+r.cost||0,book:r.book||'',note:r.note||''});n++});
+    save();render();toast(`已匯入 ${n} 筆`);
+  }catch(e){toast('JSON 格式有誤：'+e.message)}
+}
+function copyPrompt(){
+  const t=T();
+  const p=`請幫我把以下零散的旅遊資料排成行程，輸出 JSON 陣列（不要其他文字），每筆格式：{"date":"YYYY-MM-DD","slot":"morning|afternoon|evening","time":"HH:MM或空字串","name":"","place":"","map":"GoogleMaps連結或空","trans":"交通方式","cost":數字(${t?t.currency:'JPY'}),"book":"訂位資訊或空","note":""}。旅程日期 ${t?t.start:''} 到 ${t?t.end:''}。以下是我的資料：\n`;
+  navigator.clipboard.writeText(p).then(()=>toast('指令已複製，貼給 Claude 再附上你的資料')).catch(()=>toast('複製失敗，請手動選取'));
+}
+/* ================= 訂票住宿 ================= */
+let bookEdit=null;
+function vBook(){
+  const t=T();
+  const S={'已訂':'okb','待訂':'manual','比較中':'auto'};
+  let html=`<div class="card"><h2>訂票＆住宿總覽</h2>
+  <p class="hint">確認信（Email PDF、截圖）統一丟進這趟旅程的附件資料夾：<b>03-travel-kit/trips/${esc(t.name)}/</b>，這裡記摘要與檔名就好。</p>
+  <button class="btn accent sm" onclick="bookFormShow()">＋ 新增一筆</button><div id="bookForm"></div></div>`;
+  ['機票','住宿','交通','票券','其他'].forEach(type=>{
+    const rows=t.bookings.filter(b=>b.type===type);
+    if(!rows.length)return;
+    html+=`<div class="card"><h2>${{機票:'✈️',住宿:'🏨',交通:'🚃',票券:'🎫',其他:'📦'}[type]} ${type}</h2>`;
+    rows.forEach(b=>{
+      html+=`<div class="item"><div class="grow">
+        <div class="t">${esc(b.title)} <span class="badge ${S[b.status]||'auto'}">${b.status}</span>
+          ${b.src?`<span class="chip">${esc(b.src)}</span>`:''}</div>
+        <div class="s">${b.date?'📅 '+esc(b.date)+'　':''}${b.conf?'確認編號：<b>'+esc(b.conf)+'</b>　':''}
+        ${b.addr?esc(b.addr)+'　':''}${b.addrL?`<span class="chip cls">當地語：${esc(b.addrL)}</span>　`:''}
+        ${b.file?'📎 '+esc(b.file)+'　':''}${b.note?esc(b.note):''}</div></div>
+        <button class="icon" onclick="bookFormShow('${b.id}')">✎</button>
+        <button class="icon danger" onclick="del2(this,()=>bookDel('${b.id}'))">✕</button></div>`;
+    });
+    html+=`</div>`;
+  });
+  if(!t.bookings.length)html+=`<div class="card empty">還沒有任何訂票／住宿。未定的也可以先建一筆「比較中」。</div>`;
+  return html;
+}
+function bookFormShow(id){
+  bookEdit=id||null;
+  const t=T(),b=id?t.bookings.find(x=>x.id===id):{};
+  document.getElementById('bookForm').innerHTML=`<div class="formbox"><div class="row">
+    <label class="field">類型<select id="bkType">${['機票','住宿','交通','票券','其他'].map(x=>`<option ${b.type===x?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="field">狀態<select id="bkStatus">${['已訂','待訂','比較中'].map(x=>`<option ${b.status===x?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="field">來源<select id="bkSrc">${['官網','Agoda','KKday','Klook','旅行社','其他'].map(x=>`<option ${b.src===x?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="field">名稱*<input type="text" id="bkTitle" value="${esc(b.title||'')}" placeholder="BR198 台北→成田"></label></div>
+    <div class="row" style="margin-top:8px">
+    <label class="field">日期／時間<input type="text" id="bkDate" value="${esc(b.date||'')}" placeholder="8/1 09:20 起飛"></label>
+    <label class="field">確認編號<input type="text" id="bkConf" value="${esc(b.conf||'')}"></label>
+    <label class="field">地址<input type="text" id="bkAddr" value="${esc(b.addr||'')}"></label>
+    <label class="field">地址（當地語言，給司機看）<input type="text" id="bkAddrL" value="${esc(b.addrL||'')}" placeholder="東京都台東区…"></label>
+    <label class="field">附件檔名<input type="text" id="bkFile" value="${esc(b.file||'')}" placeholder="agoda確認信_0801.pdf"></label>
+    <label class="field">備註<input type="text" id="bkNote" value="${esc(b.note||'')}"></label>
+    <button class="btn accent" onclick="bookSave()">${id?'更新':'加入'}</button>
+    <button class="btn ghost" onclick="render()">取消</button></div></div>`;
+}
+function bookSave(){
+  const t=T();
+  const obj={id:bookEdit||uid(),type:document.getElementById('bkType').value,status:document.getElementById('bkStatus').value,
+    src:document.getElementById('bkSrc').value,title:document.getElementById('bkTitle').value.trim(),
+    date:document.getElementById('bkDate').value.trim(),conf:document.getElementById('bkConf').value.trim(),
+    addr:document.getElementById('bkAddr').value.trim(),addrL:document.getElementById('bkAddrL').value.trim(),
+    file:document.getElementById('bkFile').value.trim(),note:document.getElementById('bkNote').value.trim()};
+  if(!obj.title){toast('名稱必填');return}
+  if(bookEdit){const i=t.bookings.findIndex(x=>x.id===bookEdit);t.bookings[i]=obj}else t.bookings.push(obj);
+  save();render();toast('已儲存');
+}
+function bookDel(id){const t=T();t.bookings=t.bookings.filter(x=>x.id!==id);save();render()}
+/* ================= 打包（三段式） ================= */
+let packView='buy';
+function vPack(){
+  const t=T();
+  let html=`<div class="card"><div class="subtabs">
+    <button class="subtab ${packView==='buy'?'active':''}" onclick="packView='buy';render()">🛒 待買</button>
+    <button class="subtab ${packView==='pack'?'active':''}" onclick="packView='pack';render()">🧳 打包（分人）</button>
+    <button class="subtab ${packView==='door'?'active':''}" onclick="packView='door';render()">🚪 出門前檢查</button></div>`;
+  if(packView==='buy'){
+    html+=`<h2>出發前待買</h2><div class="row" style="margin:8px 0">
+      <input type="text" id="buyItem" placeholder="要買什麼？（例：新行動電源）">
+      <button class="btn accent sm" onclick="buyAdd()">加入</button></div>`;
+    html+=t.packBuy.length?t.packBuy.map(x=>`<div class="checkline ${x.done?'done':''}">
+      <input type="checkbox" ${x.done?'checked':''} onchange="buyTog('${x.id}')">
+      <span class="lbl">${esc(x.item)}</span>
+      <button class="icon danger" onclick="del2(this,()=>buyDel('${x.id}'))">✕</button></div>`).join('')
+      :`<p class="empty">目前沒有待買項目。</p>`;
+  }
+  if(packView==='pack'){
+    html+=`<h2>打包清單（每人一份）</h2>
+    <p class="hint">模板來自你的「出國行李清單 V1」。「數量」欄＝原清單「穿一帶＿」的空格。</p>`;
+    if(!t.members.length)html+=`<p class="empty">先到「設定」加入成員。</p>`;
+    t.members.forEach(m=>{
+      const list=t.pack[m.id];
+      html+=`<div class="divider"></div><div class="dayhead"><b>👤 ${esc(m.name)}</b>`;
+      if(!list){html+=`<button class="btn ghost sm" onclick="packApply('${m.id}')">套用模板建立清單</button></div>`;return}
+      const done=list.filter(x=>x.done).length;
+      html+=`<span class="chip cls">${done}/${list.length}</span>
+        <button class="icon" onclick="packReset('${m.id}')">全部取消勾選</button></div>`;
+      let lastCat='';
+      list.forEach(x=>{
+        if(x.cat!==lastCat){html+=`<div class="packcat">${esc(x.cat)}</div>`;lastCat=x.cat}
+        html+=`<div class="checkline ${x.done?'done':''}">
+          <input type="checkbox" ${x.done?'checked':''} onchange="packTog('${m.id}','${x.id}')">
+          <span class="lbl">${esc(x.item)}</span>
+          ${x.qty!==null?`<input class="qty" type="number" placeholder="帶幾" value="${x.qty||''}" onchange="packQty('${m.id}','${x.id}',this.value)">`:''}
+          <button class="icon danger" onclick="del2(this,()=>packDel('${m.id}','${x.id}'))">✕</button></div>`;
+      });
+      html+=`<div class="row" style="margin-top:8px"><input type="text" id="pk-${m.id}" placeholder="自訂項目">
+        <button class="btn ghost sm" onclick="packAdd('${m.id}')">＋ 加項目</button></div>`;
+    });
+  }
+  if(packView==='door'){
+    html+=`<h2>出門前最後檢查</h2><p class="hint">出發當天照著勾，勾完再出門。</p>`;
+    html+=t.homeCheck.map(x=>`<div class="checkline ${x.done?'done':''}">
+      <input type="checkbox" ${x.done?'checked':''} onchange="homeTog('${x.id}')">
+      <span class="lbl">${esc(x.item)}</span>
+      <button class="icon danger" onclick="del2(this,()=>homeDel('${x.id}'))">✕</button></div>`).join('');
+    html+=`<div class="row" style="margin:8px 0"><input type="text" id="hcItem" placeholder="自訂檢查項">
+      <button class="btn ghost sm" onclick="homeAdd()">＋ 加入</button>
+      <button class="icon" onclick="homeReset()">全部取消勾選</button></div>
+    <div class="divider"></div><h2>出發交通</h2>`;
+    html+=t.members.map(m=>`<div class="checkline"><span class="lbl">👤 ${esc(m.name)}</span>
+      <select onchange="memTransport('${m.id}',this.value)">
+      ${['高鐵','接送','叫車','自行前往'].map(x=>`<option ${m.transport===x?'selected':''}>${x}</option>`).join('')}
+      </select></div>`).join('');
+    html+=`<p class="hint" style="margin-top:8px">🚄 高鐵：出發前 3–5 天買票（總覽會自動提醒）。🚗 接送／叫車：記得先預約。</p>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+function buyAdd(){const v=document.getElementById('buyItem').value.trim();if(!v)return;
+  T().packBuy.push({id:uid(),item:v,done:false});save();render()}
+function buyTog(id){const x=T().packBuy.find(i=>i.id===id);x.done=!x.done;save();render()}
+function buyDel(id){T().packBuy=T().packBuy.filter(i=>i.id!==id);save();render()}
+function packApply(mid){
+  const t=T();t.pack[mid]=[];
+  PACK_TEMPLATE.forEach(([cat,items])=>items.forEach(([item,q])=>
+    t.pack[mid].push({id:uid(),cat,item,qty:q?'':null,done:false})));
+  save();render();toast('模板已套用');
+}
+function packTog(mid,id){const x=T().pack[mid].find(i=>i.id===id);x.done=!x.done;save();render()}
+function packQty(mid,id,v){const x=T().pack[mid].find(i=>i.id===id);x.qty=v;save()}
+function packDel(mid,id){const t=T();t.pack[mid]=t.pack[mid].filter(i=>i.id!==id);save();render()}
+function packAdd(mid){const v=document.getElementById('pk-'+mid).value.trim();if(!v)return;
+  T().pack[mid].push({id:uid(),cat:'自訂',item:v,qty:null,done:false});save();render()}
+function packReset(mid){T().pack[mid].forEach(x=>x.done=false);save();render()}
+function homeTog(id){const x=T().homeCheck.find(i=>i.id===id);x.done=!x.done;save();render()}
+function homeDel(id){T().homeCheck=T().homeCheck.filter(i=>i.id!==id);save();render()}
+function homeAdd(){const v=document.getElementById('hcItem').value.trim();if(!v)return;
+  T().homeCheck.push({id:uid(),item:v,done:false});save();render()}
+function homeReset(){T().homeCheck.forEach(x=>x.done=false);save();render()}
+function memTransport(mid,v){const m=T().members.find(x=>x.id===mid);m.transport=v;save();render()}
+/* ================= 記帳分帳 ================= */
+let expEditId=null;
+function expFormHTML(t,e){
+  e=e||{};
+  return `<div class="row">
+    <label class="field">日期<input type="date" id="exDate" value="${e.date||today()}"></label>
+    <label class="field">項目<input type="text" id="exDesc" value="${esc(e.desc||'')}" placeholder="鰻魚飯"></label>
+    <label class="field">金額<input type="number" id="exAmt" value="${e.amt||''}" step="any"></label>
+    <label class="field">幣別<select id="exMode">
+      <option value="local" ${e.mode!=='twd'?'selected':''}>${t.currency}（自動換台幣）</option>
+      <option value="twd" ${e.mode==='twd'?'selected':''}>台幣（刷卡等）</option></select></label>
+    <label class="field">誰付的<select id="exPayer">${t.members.map(m=>`<option value="${m.id}" ${e.payer===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
+  </div>
+  <div style="margin:8px 0 2px"><span class="hint" style="margin:0">分類：</span>
+    ${store.cats.map(c=>`<span class="chip btnchip ${'exCat'===''?'':''}" data-cat="${esc(c)}" onclick="pickCat(this)"
+      style="${(e.cat||store.cats[0])===c?'background:var(--accent-soft);color:var(--accent);border-color:transparent':''}">${esc(c)}</span>`).join('')}
+    <input type="hidden" id="exCat" value="${esc(e.cat||store.cats[0])}"></div>
+  <div style="margin:6px 0"><span class="hint" style="margin:0">誰參與這筆（均分）：</span>
+    ${t.members.map(m=>`<label class="switch"><input type="checkbox" class="exPart" value="${m.id}"
+      ${!e.parts||e.parts.includes(m.id)?'checked':''}> ${esc(m.name)}</label>`).join('　')}</div>
+  <div class="row"><button class="btn accent" onclick="expSave()">${expEditId?'更新':'記一筆'}</button>
+  ${expEditId?`<button class="btn ghost" onclick="expEditId=null;render()">取消</button>`:''}
+  <span class="hint" style="margin:0">匯率：1 ${t.currency} ≈ ${rate(t)} TWD（${t.rate.use==='live'?'即時':'手動'}，到「記帳分帳」頁可更新）</span></div>`;
+}
+function pickCat(el){
+  document.getElementById('exCat').value=el.dataset.cat;
+  el.parentElement.querySelectorAll('.chip').forEach(c=>c.style.cssText='');
+  el.style.cssText='background:var(--accent-soft);color:var(--accent);border-color:transparent';
+}
+function expSave(){
+  const t=T();
+  const parts=[...document.querySelectorAll('.exPart:checked')].map(x=>x.value);
+  const obj={id:expEditId||uid(),date:document.getElementById('exDate').value,
+    desc:document.getElementById('exDesc').value.trim(),cat:document.getElementById('exCat').value,
+    amt:+document.getElementById('exAmt').value||0,mode:document.getElementById('exMode').value,
+    payer:document.getElementById('exPayer').value,parts:parts.length?parts:t.members.map(m=>m.id)};
+  if(!obj.desc||!obj.amt){toast('項目與金額必填');return}
+  if(expEditId){const i=t.exp.findIndex(x=>x.id===expEditId);t.exp[i]=obj;expEditId=null}
+  else t.exp.push(obj);
+  save();render();toast('已記帳');
+}
+function vExp(){
+  const t=T();
+  let html=`<div class="card"><h2>匯率</h2><div class="row">
+    <label class="field">手動匯率（1 ${t.currency} = ? TWD）<input type="number" step="0.0001" id="rateManual" value="${t.rate.manual}" onchange="setManualRate(this.value)"></label>
+    <label class="field">使用<select id="rateUse" onchange="setRateUse(this.value)">
+      <option value="manual" ${t.rate.use==='manual'?'selected':''}>手動匯率</option>
+      <option value="live" ${t.rate.use==='live'?'selected':''}>即時匯率</option></select></label>
+    <button class="btn ghost sm" onclick="fetchRate()">🔄 抓即時匯率</button>
+    <span class="hint" style="margin:0">${t.rate.live?`即時：1 ${t.currency} = ${t.rate.live} TWD（${t.rate.liveAt||''}）`:'尚未抓過即時匯率（需要網路）'}</span></div>
+    <p class="hint" style="margin:6px 0 0">離線時請用手動匯率；出發前抓一次即時值也會存起來。</p></div>`;
+  html+=`<div class="card"><h2>${expEditId?'✎ 編輯這筆':'＋ 記一筆'}</h2>${expFormHTML(t,expEditId?t.exp.find(x=>x.id===expEditId):null)}</div>`;
+  const total=t.exp.reduce((s,e)=>s+expTWD(t,e),0);
+  html+=`<div class="card"><h2>帳目（共 ${t.exp.length} 筆，NT$ ${fmt(total)}）</h2><div class="tbl-scroll"><table>
+    <tr><th>日期</th><th>項目</th><th>分類</th><th>金額</th><th>台幣</th><th>付款</th><th>參與</th><th></th></tr>`;
+  [...t.exp].sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
+    const payer=t.members.find(m=>m.id===e.payer);
+    html+=`<tr><td class="nowrap">${e.date.slice(5)}</td><td>${esc(e.desc)}</td>
+      <td><span class="chip" style="border-color:transparent;background:${catColor(e.cat)}1a;color:${catColor(e.cat)}">${esc(e.cat)}</span></td>
+      <td class="nowrap">${fmt(e.amt)} ${e.mode==='twd'?'TWD':t.currency}</td>
+      <td class="nowrap money">${fmt(expTWD(t,e))}</td>
+      <td>${payer?esc(payer.name):'?'}</td>
+      <td>${e.parts.length===t.members.length?'全員':e.parts.map(id=>{const m=t.members.find(x=>x.id===id);return m?esc(m.name):''}).join('、')}</td>
+      <td class="nowrap"><button class="icon" onclick="expEditId='${e.id}';render()">✎</button>
+      <button class="icon danger" onclick="del2(this,()=>expDel('${e.id}'))">✕</button></td></tr>`;
+  });
+  html+=`</table></div>${t.exp.length?'':'<p class="empty">還沒有帳目。</p>'}</div>`;
+  html+=`<div class="card"><h2>💸 結算（誰給誰多少）</h2>${settleHTML(t)}</div>`;
+  return html;
+}
+function expDel(id){const t=T();t.exp=t.exp.filter(x=>x.id!==id);save();render()}
+function setManualRate(v){T().rate.manual=+v||0;save();render()}
+function setRateUse(v){T().rate.use=v;save();render()}
+function fetchRate(){
+  const t=T();
+  toast('抓取中…');
+  fetch('https://open.er-api.com/v6/latest/'+t.currency).then(r=>r.json()).then(j=>{
+    if(j&&j.rates&&j.rates.TWD){t.rate.live=Math.round(j.rates.TWD*10000)/10000;
+      t.rate.liveAt=today();t.rate.use='live';save();render();toast('即時匯率已更新：'+t.rate.live)}
+    else toast('回應格式不對，改用手動匯率吧');
+  }).catch(()=>toast('抓不到（可能離線），請用手動匯率'));
+}
+function settle(t){
+  const net={};t.members.forEach(m=>net[m.id]=0);
+  t.exp.forEach(e=>{
+    const twd=expTWD(t,e),parts=e.parts.filter(p=>net[p]!==undefined);
+    if(!parts.length)return;
+    const share=twd/parts.length;
+    if(net[e.payer]!==undefined)net[e.payer]+=twd;
+    parts.forEach(p=>net[p]-=share);
+  });
+  const debt=[],cred=[];
+  Object.entries(net).forEach(([id,v])=>{if(v<-1)debt.push({id,v:-v});if(v>1)cred.push({id,v})});
+  debt.sort((a,b)=>b.v-a.v);cred.sort((a,b)=>b.v-a.v);
+  const moves=[];let i=0,j=0;
+  while(i<debt.length&&j<cred.length){
+    const x=Math.min(debt[i].v,cred[j].v);
+    moves.push({from:debt[i].id,to:cred[j].id,amt:x});
+    debt[i].v-=x;cred[j].v-=x;
+    if(debt[i].v<1)i++;if(cred[j].v<1)j++;
+  }
+  return{net,moves};
+}
+function settleHTML(t){
+  if(!t.exp.length)return'<p class="empty">有帳目後這裡會自動算。</p>';
+  const{net,moves}=settle(t);
+  let html=`<div class="tbl-scroll"><table><tr><th>成員</th><th>先墊了</th><th>應分攤</th><th>淨額</th></tr>`;
+  t.members.forEach(m=>{
+    const paid=t.exp.filter(e=>e.payer===m.id).reduce((s,e)=>s+expTWD(t,e),0);
+    const owed=paid-net[m.id];
+    html+=`<tr><td>${esc(m.name)}</td><td>NT$ ${fmt(paid)}</td><td>NT$ ${fmt(owed)}</td>
+      <td class="money" style="color:${net[m.id]>=0?'var(--ok)':'var(--danger)'}">${net[m.id]>=0?'+':''}${fmt(net[m.id])}</td></tr>`;
+  });
+  html+=`</table></div><div class="divider"></div>`;
+  html+=moves.length?moves.map(mv=>{
+    const f=t.members.find(m=>m.id===mv.from),to=t.members.find(m=>m.id===mv.to);
+    return `<div class="item"><div class="grow"><b>${f?esc(f.name):'?'}</b> → 給 → <b>${to?esc(to.name):'?'}</b>
+      <span class="money">NT$ ${fmt(mv.amt)}</span></div></div>`;
+  }).join(''):'<p class="empty">目前剛好平，不用互相給錢。</p>';
+  return html;
+}
+/* ================= 伴手禮 ================= */
+let giftEdit=null;
+function vGift(){
+  const t=T();
+  const g=giftEdit?t.gifts.find(x=>x.id===giftEdit):{};
+  let html=`<div class="card"><h2>🎁 伴手禮託買清單</h2><div class="formbox"><div class="row">
+    <label class="field">誰託買<input type="text" id="gfWho" value="${esc(g.who||'')}" placeholder="同事小美"></label>
+    <label class="field">品項<input type="text" id="gfItem" value="${esc(g.item||'')}" placeholder="白色戀人 24 入"></label>
+    <label class="field">預算（${t.currency}）<input type="number" id="gfBudget" value="${g.budget||''}"></label>
+    <label class="field">實際花費（${t.currency}）<input type="number" id="gfActual" value="${g.actual||''}"></label>
+    <button class="btn accent" onclick="giftSave()">${giftEdit?'更新':'加入'}</button>
+    ${giftEdit?`<button class="btn ghost" onclick="giftEdit=null;render()">取消</button>`:''}</div></div>`;
+  html+=t.gifts.length?t.gifts.map(x=>`<div class="checkline ${x.done?'done':''}">
+    <input type="checkbox" ${x.done?'checked':''} onchange="giftTog('${x.id}')">
+    <span class="lbl"><b>${esc(x.item)}</b>（${esc(x.who)}託）
+      ${x.budget?`預算 ${fmt(x.budget)}`:''} ${x.actual?`／實花 <b>${fmt(x.actual)}</b> ${t.currency}`:''}
+      ${x.expId?'<span class="badge okb">已入帳</span>':''}</span>
+    ${x.actual&&!x.expId?`<button class="icon" onclick="giftToExp('${x.id}')">帶入記帳</button>`:''}
+    <button class="icon" onclick="giftEdit='${x.id}';render()">✎</button>
+    <button class="icon danger" onclick="del2(this,()=>giftDel('${x.id}'))">✕</button></div>`).join('')
+    :'<p class="empty">還沒有託買項目。</p>';
+  html+=`</div>`;
+  return html;
+}
+function giftSave(){
+  const t=T();
+  const obj={id:giftEdit||uid(),who:document.getElementById('gfWho').value.trim(),
+    item:document.getElementById('gfItem').value.trim(),budget:+document.getElementById('gfBudget').value||0,
+    actual:+document.getElementById('gfActual').value||0,
+    done:giftEdit?t.gifts.find(x=>x.id===giftEdit).done:false,
+    expId:giftEdit?t.gifts.find(x=>x.id===giftEdit).expId:null};
+  if(!obj.item){toast('品項必填');return}
+  if(giftEdit){const i=t.gifts.findIndex(x=>x.id===giftEdit);t.gifts[i]=obj;giftEdit=null}
+  else t.gifts.push(obj);
+  save();render();toast('已儲存');
+}
+function giftTog(id){const x=T().gifts.find(i=>i.id===id);x.done=!x.done;save();render()}
+function giftDel(id){T().gifts=T().gifts.filter(i=>i.id!==id);save();render()}
+function giftToExp(id){
+  const t=T(),g=t.gifts.find(x=>x.id===id);
+  const e={id:uid(),date:today(),desc:`${g.item}（${g.who}託買）`,cat:'伴手禮',
+    amt:g.actual,mode:'local',payer:t.members[0]?t.members[0].id:'',parts:t.members.map(m=>m.id)};
+  t.exp.push(e);g.expId=e.id;save();render();
+  toast('已帶入記帳（付款人與參與者記得到記帳頁調整）');
+}
+/* ================= 網卡·QR ================= */
+function vNet(){
+  const t=T();
+  let html=`<div class="card"><h2>📶 網卡／漫遊</h2><div class="row" style="margin-bottom:8px">
+    <label class="field">誰負責買全部人的<select onchange="simBuyer(this.value)">
+      ${t.members.map(m=>`<option value="${m.id}" ${t.sim.buyerId===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
+    <button class="btn ghost sm" onclick="simAddRow()">＋ 加一張卡</button></div>`;
+  html+=t.sim.rows.length?`<div class="tbl-scroll"><table><tr><th>用的人</th><th>方案</th><th>開通方式</th><th>客服／備註</th><th></th></tr>`+
+    t.sim.rows.map(r=>`<tr>
+      <td><input type="text" value="${esc(r.user)}" onchange="simEdit('${r.id}','user',this.value)" style="min-width:70px"></td>
+      <td><input type="text" value="${esc(r.plan)}" placeholder="docomo eSIM 8天" onchange="simEdit('${r.id}','plan',this.value)"></td>
+      <td><input type="text" value="${esc(r.act)}" placeholder="落地開飛航再開漫遊" onchange="simEdit('${r.id}','act',this.value)"></td>
+      <td><input type="text" value="${esc(r.note)}" onchange="simEdit('${r.id}','note',this.value)"></td>
+      <td><button class="icon danger" onclick="del2(this,()=>simDel('${r.id}'))">✕</button></td></tr>`).join('')+`</table></div>`
+    :'<p class="empty">還沒登記網卡。</p>';
+  html+=`<label class="field" style="margin-top:10px">到當地的設定步驟（大家共用）
+    <textarea onchange="simSetup(this.value)" placeholder="1. 關 Wi-Fi 通話  2. 啟用 eSIM  3. 開資料漫遊…">${esc(t.sim.setup)}</textarea></label></div>`;
+  html+=`<div class="card"><h2>🛂 入境文件／QR</h2>
+  <p class="hint">QR 截圖、PDF 放這趟的附件資料夾 <b>03-travel-kit/trips/${esc(t.name)}/</b>；這裡放連結與備註，起飛前點開檢查一次。</p>`;
+  html+=t.qr.map(q=>`<div class="item"><div class="grow">
+    <div class="t">${q.url?`<a href="${esc(q.url)}" target="_blank">${esc(q.name)}</a>`:esc(q.name)}</div>
+    <div class="s">${esc(q.note||'')}</div></div>
+    <button class="icon danger" onclick="del2(this,()=>qrDel('${q.id}'))">✕</button></div>`).join('');
+  html+=`<div class="row" style="margin-top:8px">
+    <label class="field">名稱<input type="text" id="qrName" placeholder="K-ETA"></label>
+    <label class="field">連結<input type="url" id="qrUrl"></label>
+    <label class="field">備註<input type="text" id="qrNote"></label>
+    <button class="btn ghost sm" onclick="qrAdd()">＋ 加入</button></div></div>`;
+  return html;
+}
+function simBuyer(v){T().sim.buyerId=v;save()}
+function simAddRow(){const t=T();t.sim.rows.push({id:uid(),user:'',plan:'',act:'',note:''});save();render()}
+function simEdit(id,k,v){const r=T().sim.rows.find(x=>x.id===id);r[k]=v;save()}
+function simDel(id){T().sim.rows=T().sim.rows.filter(x=>x.id!==id);save();render()}
+function simSetup(v){T().sim.setup=v;save()}
+function qrAdd(){const n=document.getElementById('qrName').value.trim();if(!n)return;
+  T().qr.push({id:uid(),name:n,url:document.getElementById('qrUrl').value.trim(),
+    note:document.getElementById('qrNote').value.trim()});save();render()}
+function qrDel(id){T().qr=T().qr.filter(x=>x.id!==id);save();render()}
+/* ================= 緊急卡 ================= */
+function vEmg(){
+  const t=T();
+  let html=`<div class="card"><h2>🆘 緊急資訊卡</h2>
+  <p class="hint">一頁離線可開；可用瀏覽器「列印」存成 PDF 隨身帶。以下官方號碼查證日期 2026-07-20，出發前請再核對一次官網。</p>
+  <button class="btn ghost sm no-print" onclick="window.print()">🖨 列印／存 PDF</button></div>`;
+  if((t.dest||'').includes('日本')){
+    html+=`<div class="card"><h2>🇯🇵 日本（預填・官方查證）</h2>
+    <div class="item"><div class="grow"><div class="t">當地報案／急救</div>
+      <div class="s">警察 <b>110</b>｜救急・火災 <b>119</b></div></div></div>
+    <div class="item"><div class="grow"><div class="t">台北駐日經濟文化代表處（東京）</div>
+      <div class="s">代表電話 <b>(81-3) 3280-7811</b>｜急難救助 24 小時 <b>(81-3) 3280-7917</b><br>
+      急難行動電話（日本境內直撥）<b>080-1009-7179</b>／<b>080-1009-7436</b><br>
+      地址：東京都港区白金台 5-20-2</div></div></div>
+    <div class="item"><div class="grow"><div class="t">外交部（從國外撥）</div>
+      <div class="s">旅外國人急難救助專線 <b>800-0885-0885</b>（部分地區適用）<br>
+      外交部緊急聯絡中心 <b>+886-800-085-095</b></div></div></div>
+    <div class="item"><div class="grow"><div class="t">護照遺失怎麼辦</div>
+      <div class="s">① 就近警察署報案取得受理番號 → ② 聯絡駐日代表處（上方電話）申請補發或入國證明書 → ③ 用護照影本＋備用照片加速辦理（都在打包清單裡）。</div></div></div></div>`;
+  }
+  html+=`<div class="card"><h2>本趟自填資訊</h2><div class="row">
+    <label class="field">旅遊保險（公司／保單號）<input type="text" value="${esc(t.emg.ins)}" onchange="emgSet('ins',this.value)"></label>
+    <label class="field">保險緊急專線<input type="text" value="${esc(t.emg.insTel)}" onchange="emgSet('insTel',this.value)"></label>
+    <label class="field">信用卡掛失電話<input type="text" value="${esc(t.emg.cardLoss)}" onchange="emgSet('cardLoss',this.value)"></label>
+    <label class="field">其他備註<input type="text" value="${esc(t.emg.notes)}" onchange="emgSet('notes',this.value)"></label></div>
+  <p class="hint" style="margin-top:8px">住宿地址請看「訂票住宿」的當地語言欄。敏感資料只存在這台裝置，不會上傳。</p></div>`;
+  html+=`<div class="card"><h2>每人緊急聯絡（自填）</h2><div class="tbl-scroll"><table>
+    <tr><th>成員</th><th>台灣緊急聯絡人＋電話</th><th>血型</th><th>過敏／用藥</th></tr>
+    ${t.members.map(m=>`<tr><td>${esc(m.name)}</td>
+      <td><input type="text" value="${esc(m.emgContact)}" onchange="memSet('${m.id}','emgContact',this.value)" placeholder="爸 0912-xxx-xxx"></td>
+      <td><input type="text" value="${esc(m.blood)}" onchange="memSet('${m.id}','blood',this.value)" style="min-width:60px;width:70px"></td>
+      <td><input type="text" value="${esc(m.allergy)}" onchange="memSet('${m.id}','allergy',this.value)"></td></tr>`).join('')}
+  </table></div></div>`;
+  return html;
+}
+function emgSet(k,v){T().emg[k]=v;save()}
+function memSet(mid,k,v){const m=T().members.find(x=>x.id===mid);m[k]=v;save()}
+/* ================= 統計 ================= */
+let statTable=false;
+function vStat(){
+  const t=T();
+  if(!t.exp.length)return`<div class="card empty">有帳目之後，這裡會有每日花費、分類佔比與每人結算。</div>`;
+  const total=t.exp.reduce((s,e)=>s+expTWD(t,e),0);
+  const byDay={},byCat={};
+  tripDays(t).forEach(d=>byDay[d]=0);
+  t.exp.forEach(e=>{byDay[e.date]=(byDay[e.date]||0)+expTWD(t,e);
+    byCat[e.cat]=(byCat[e.cat]||0)+expTWD(t,e)});
+  const days=Object.keys(byDay).sort();
+  const catRows=store.cats.filter(c=>byCat[c]).map(c=>({cat:c,v:byCat[c]}));
+  Object.keys(byCat).filter(c=>!store.cats.includes(c)).forEach(c=>catRows.push({cat:c,v:byCat[c]}));
+  let html=`<div class="card"><div class="kpi">
+    <div><b>NT$ ${fmt(total)}</b><span>總花費</span></div>
+    <div><b>NT$ ${fmt(total/Math.max(1,t.members.length))}</b><span>人均</span></div>
+    <div><b>NT$ ${fmt(total/Math.max(1,days.filter(d=>byDay[d]>0).length||1))}</b><span>有消費日的日均</span></div></div>
+    <label class="switch no-print"><input type="checkbox" ${statTable?'checked':''} onchange="statTable=this.checked;render()"> 用表格看（替代圖表）</label></div>`;
+  /* 每日長條 */
+  html+=`<div class="card"><h2>每日花費（台幣）</h2>`;
+  if(statTable){
+    html+=`<div class="tbl-scroll"><table><tr><th>日期</th><th>花費</th></tr>${days.map(d=>
+      `<tr><td>${d.slice(5)}</td><td class="money">NT$ ${fmt(byDay[d])}</td></tr>`).join('')}</table></div>`;
+  }else{
+    const PAD=46,w=Math.max(320,days.length*56+PAD),h=180,max=Math.max(...days.map(d=>byDay[d]),1);
+    const maxDay=days.reduce((a,b)=>byDay[a]>=byDay[b]?a:b);
+    html+=`<div class="tbl-scroll"><svg viewBox="0 0 ${w} ${h+34}" width="${w}" style="max-width:100%" role="img" aria-label="每日花費長條圖">`;
+    [0.5,1].forEach(f=>{const y=h-h*f+10;
+      html+=`<line x1="${PAD-6}" y1="${y}" x2="${w}" y2="${y}" stroke="#dbe1df" stroke-width="1"/>
+      <text x="${PAD-9}" y="${y+3}" font-size="10" fill="#6b7683" text-anchor="end">${fmt(max*f)}</text>`});
+    days.forEach((d,i)=>{
+      const bh=Math.max(byDay[d]/max*h,byDay[d]>0?3:0),x=i*56+PAD,y=h-bh+10;
+      html+=`<path class="bar" d="M${x},${h+10} L${x},${y+4} Q${x},${y} ${x+4},${y} L${x+20},${y} Q${x+24},${y} ${x+24},${y+4} L${x+24},${h+10} Z"
+        fill="#0e8aa6" data-tip="${d.slice(5)}：NT$ ${fmt(byDay[d])}"/>`;
+      if(d===maxDay&&byDay[d]>0){ /* 直標：夠高就放長條內（白字），太矮放上方 */
+        html+=bh>26?`<text x="${x+12}" y="${y+15}" font-size="10.5" font-weight="700" fill="#fff" text-anchor="middle">${fmt(byDay[d])}</text>`
+          :`<text x="${x+12}" y="${y-5}" font-size="10.5" font-weight="700" fill="#2a3340" text-anchor="middle">${fmt(byDay[d])}</text>`;}
+      html+=`<text x="${x+12}" y="${h+24}" font-size="10" fill="#6b7683" text-anchor="middle">${d.slice(5)}</text>`;
+    });
+    html+=`</svg></div>`;
+  }
+  html+=`</div>`;
+  /* 分類甜甜圈 */
+  html+=`<div class="card"><h2>分類佔比</h2>`;
+  if(statTable){
+    html+=`<div class="tbl-scroll"><table><tr><th>分類</th><th>金額</th><th>佔比</th></tr>${catRows.map(r=>
+      `<tr><td>${esc(r.cat)}</td><td class="money">NT$ ${fmt(r.v)}</td><td>${Math.round(r.v/total*100)}%</td></tr>`).join('')}</table></div>`;
+  }else{
+    const R=62,cx=90,cy=90;let a0=-Math.PI/2;
+    html+=`<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center"><svg viewBox="0 0 180 180" width="180" role="img" aria-label="分類佔比甜甜圈圖">`;
+    catRows.forEach(r=>{
+      const frac=r.v/total,a1=a0+frac*2*Math.PI;
+      const large=frac>0.5?1:0;
+      const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+      html+=`<path class="slice" d="M${cx},${cy} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z"
+        fill="${catColor(r.cat)}" stroke="#fff" stroke-width="2" data-tip="${esc(r.cat)}：NT$ ${fmt(r.v)}（${Math.round(frac*100)}%）"/>`;
+      a0=a1;
+    });
+    html+=`<circle cx="${cx}" cy="${cy}" r="34" fill="#fff"/>
+      <text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="11" fill="#6b7683">總計</text>
+      <text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="13" font-weight="800" fill="#1f2a33">${fmt(total)}</text></svg>`;
+    html+=`<div class="legend" style="flex-direction:column;align-items:flex-start">`+catRows.map(r=>
+      `<span><i style="background:${catColor(r.cat)}"></i>${esc(r.cat)}　<b>NT$ ${fmt(r.v)}</b>　<span class="muted">${Math.round(r.v/total*100)}%</span></span>`).join('')+`</div></div>`;
+  }
+  html+=`</div>`;
+  html+=`<div class="card"><h2>每人結算</h2>${settleHTML(t)}</div>`;
+  html+=`<div class="card no-print"><h2>📤 分享／匯出</h2><div class="row">
+    <label class="switch"><input type="checkbox" id="shareMoney"> 分享頁包含記帳與統計</label>
+    <button class="btn accent sm" onclick="exportShare()">產生唯讀分享頁（HTML）</button></div>
+    <p class="hint" style="margin-top:6px">產生的檔案傳 LINE 群組或放雲端即可；預設只有行程＋訂票住宿，勾了才含錢的部分。</p></div>`;
+  return html;
+}
+function bindChartHover(){
+  const tip=document.getElementById('tooltip');
+  document.querySelectorAll('[data-tip]').forEach(el=>{
+    el.addEventListener('mousemove',ev=>{tip.style.display='block';tip.textContent=el.dataset.tip;
+      tip.style.left=(ev.clientX+12)+'px';tip.style.top=(ev.clientY-30)+'px'});
+    el.addEventListener('mouseleave',()=>tip.style.display='none');
+    el.addEventListener('click',ev=>{tip.style.display='block';tip.textContent=el.dataset.tip;
+      tip.style.left=(ev.clientX+12)+'px';tip.style.top=(ev.clientY-30)+'px';
+      setTimeout(()=>tip.style.display='none',1600)});
+  });
+}
+/* ================= 設定 ================= */
+function vSet(){
+  const t=T();
+  let html=`<div class="card"><h2>⚙️ 設定</h2>`;
+  if(t){
+    html+=`<h2 style="margin-top:8px">旅程資料</h2><div class="row">
+      <label class="field">名稱<input type="text" value="${esc(t.name)}" onchange="tripSet('name',this.value)"></label>
+      <label class="field">目的地<input type="text" value="${esc(t.dest)}" onchange="tripSet('dest',this.value)"></label>
+      <label class="field">幣別代碼<input type="text" value="${esc(t.currency)}" onchange="tripSet('currency',this.value.toUpperCase())" style="width:90px;min-width:90px"></label>
+      <label class="field">出發<input type="date" value="${t.start}" onchange="tripSet('start',this.value)"></label>
+      <label class="field">回程<input type="date" value="${t.end}" onchange="tripSet('end',this.value)"></label></div>
+    <div class="divider"></div><h2>成員</h2>`;
+    html+=t.members.map(m=>`<div class="checkline"><span class="lbl">👤
+      <input type="text" value="${esc(m.name)}" onchange="memSet('${m.id}','name',this.value)" style="min-width:90px;width:110px"></span>
+      <button class="icon danger" onclick="del2(this,()=>memDel('${m.id}'))">移除</button></div>`).join('');
+    html+=`<div class="row" style="margin-top:8px"><input type="text" id="nmName" placeholder="新成員名字">
+      <button class="btn ghost sm" onclick="memAdd()">＋ 加成員</button></div>
+    <p class="hint">移除成員不會刪掉舊帳目，但結算會忽略查無此人的參與。</p><div class="divider"></div>`;
+  }
+  html+=`<h2>記帳分類（順序＝圖表顏色順序，最多前 5 類有專屬色）</h2>
+    <div>${store.cats.map((c,i)=>`<span class="chip" style="border-color:transparent;background:${i<CHART_COLORS.length?CHART_COLORS[i]:OTHER_COLOR}22;color:${i<CHART_COLORS.length?CHART_COLORS[i]:OTHER_COLOR}">${esc(c)}
+      <a href="javascript:void(0)" onclick="catDel(${i})" style="text-decoration:none">✕</a></span>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><input type="text" id="ncCat" placeholder="新分類（例：溫泉）">
+    <button class="btn ghost sm" onclick="catAdd()">＋ 加分類</button></div><div class="divider"></div>
+  <h2>備份／還原</h2><div class="row">
+    <button class="btn ghost sm" onclick="exportJSON()">⬇️ 匯出全部資料（JSON 備份）</button>
+    <label class="btn ghost sm" style="display:inline-block">⬆️ 匯入備份<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>
+  <p class="hint" style="margin-top:8px">資料存在這台裝置的瀏覽器裡。換裝置、給家人裝，就用匯出／匯入。建議每趟旅行結束匯出一份 JSON 放到這趟的附件資料夾。</p></div>`;
+  return html;
+}
+function tripSet(k,v){T()[k]=v;save();render()}
+function memAdd(){const v=document.getElementById('nmName').value.trim();if(!v)return;
+  T().members.push({id:uid(),name:v,transport:'高鐵',emgContact:'',blood:'',allergy:''});save();render()}
+function memDel(id){const t=T();t.members=t.members.filter(m=>m.id!==id);delete t.pack[id];save();render()}
+function catAdd(){const v=document.getElementById('ncCat').value.trim();if(!v||store.cats.includes(v))return;
+  store.cats.push(v);save();render()}
+function catDel(i){store.cats.splice(i,1);save();render()}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(store,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='travelkit-backup-'+today()+'.json';a.click();toast('已匯出備份');
+}
+function importJSON(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result);
+    if(!j.trips||!j.order)throw new Error('不是本工具的備份檔');
+    store=j;save();render();toast('已還原備份')}catch(e){toast('匯入失敗：'+e.message)}};
+  r.readAsText(f);
+}
+/* ================= 分享頁匯出 ================= */
+function exportShare(){
+  const t=T(),withMoney=document.getElementById('shareMoney').checked;
+  const days=tripDays(t);
+  let body=`<h1>🧳 ${esc(t.name)}</h1><p class="lede">${esc(t.dest)}｜${t.start} ～ ${t.end}｜成員：${t.members.map(m=>esc(m.name)).join('、')}</p>`;
+  body+=`<div class="card"><h2>行程</h2>`;
+  days.forEach((d,i)=>{
+    body+=`<div class="dayhead" style="margin-top:10px"><b>Day ${i+1}｜${d}</b>${(t.itin[d]||[]).length?'':'<span class="badge manual">待規劃</span>'}</div>`;
+    body+=itinDayHTML(t,d,false);
+  });
+  body+=`</div><div class="card"><h2>訂票＆住宿</h2>`;
+  t.bookings.forEach(b=>{body+=`<div class="item"><div class="grow"><div class="t">${esc(b.title)}（${b.status}）</div>
+    <div class="s">${b.date?esc(b.date)+'　':''}${b.conf?'編號 '+esc(b.conf)+'　':''}${b.addr?esc(b.addr):''}
+    ${b.addrL?'<br>當地語：'+esc(b.addrL):''}</div></div></div>`});
+  body+=`</div>`;
+  if(withMoney){
+    const total=t.exp.reduce((s,e)=>s+expTWD(t,e),0);
+    body+=`<div class="card"><h2>花費與結算</h2><p>總花費 <b>NT$ ${fmt(total)}</b></p>${settleHTML(t)}</div>`;
+  }
+  const css=document.querySelector('style').textContent;
+  const html=`<!DOCTYPE html><html lang="zh-Hant-TW"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(t.name)}｜行程分享</title>
+<style>${css}</style></head><body><div class="wrap">${body}
+<p class="hint">此為唯讀分享頁，由「出國旅遊小工具」產生（${today()}）。</p></div></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`${t.name}-分享頁.html`;a.click();toast('分享頁已產生，傳給同行的人吧');
+}
+/* ================= 啟動 ================= */
+load();render();
+</script>
+</body>
+</html>
