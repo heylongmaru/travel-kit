@@ -285,6 +285,7 @@ function compressImage(file,maxDim,quality){return new Promise((res,rej)=>{
   reader.readAsDataURL(file)})}
 function photosOf(kind,id){const t=T();
   if(kind==='rgal'){if(!t.restockGallery)t.restockGallery={id:'rgal',photos:[]};return t.restockGallery}
+  if(kind==='ritem'){const o=t.restock.find(x=>x.id===id);if(o&&!o.photos)o.photos=[];return o}
   const arr=kind==='book'?t.bookings:t.qr;const o=arr.find(x=>x.id===id);if(o&&!o.photos)o.photos=[];return o}
 function photoStripHTML(kind,o){
   const pics=(o.photos||[]).map(pid=>
@@ -844,45 +845,68 @@ function vGift(){
       <button class="icon danger" onclick="del2(this,()=>giftDel('${x.id}'))">✕</button></div>`).join('')
       :'<p class="empty">還沒有託買項目。</p>';
   }else{
+    /* 舊版散照片相簿 → 轉成「一張一項」（相容 v1.7） */
+    if(t.restockGallery&&t.restockGallery.photos&&t.restockGallery.photos.length){
+      t.restockGallery.photos.forEach(pid=>t.restock.unshift({id:uid(),item:'',qty:'',done:false,actual:0,expId:null,photos:[pid]}));
+      t.restockGallery.photos=[];save();
+    }
     html+=`<h2>🛍 補貨清單（自己要買的）</h2>
-    <div class="formbox" style="margin-bottom:14px">
-      <h2 style="font-size:14px;margin-bottom:2px">📷 拍照記（最快，免打字）</h2>
-      <p class="hint" style="margin:2px 0 0">看到想買的、或你的手寫清單，直接拍起來存這裡。逛街時對著照片買、買到打個勾就好。手機可直接開相機。</p>
-      ${photoStripHTML('rgal',photosOf('rgal'))}</div>
-    <p class="hint" style="margin:0 0 8px">想要「可打勾、可算錢」的文字清單，才需要下面這些：</p>
+    <div class="formbox" style="margin-bottom:12px">
+      <label class="btn accent" style="display:inline-flex;align-items:center;gap:6px">📷 拍一樣（可一次選正面＋色號）
+        <input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="restockShot(this)"></label>
+      <p class="hint" style="margin:8px 0 0">一支東西拍好（正面＋色號可一次選兩張＝同一項），下面就多一列，補上名字＋色號即可。<br>
+      🔎 想自動認品牌？把照片丟到 Claude 對話，我幫你認名字（工具離線認不準）。</p></div>`;
+    /* 清單：每一項＝照片＋可編輯名字 */
+    html+=t.restock.length?t.restock.map(x=>`<div class="item" style="align-items:flex-start">
+      <input type="checkbox" ${x.done?'checked':''} onchange="restockTog('${x.id}')" style="width:19px;height:19px;accent-color:var(--accent);margin-top:9px;flex:none">
+      <div class="grow">
+        <input type="text" value="${esc(x.item)}" onchange="restockRename('${x.id}',this.value)"
+          placeholder="名稱＋色號（例：CANMAKE 潤唇磨砂 01）"
+          style="width:100%;font-weight:700;${x.done?'text-decoration:line-through;color:var(--muted)':''}">
+        <div class="s" style="margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          花費 <input class="qty" type="number" placeholder="選填" value="${x.actual||''}" onchange="restockActual('${x.id}',this.value)" style="width:80px;min-width:80px">${x.actual?`<span class="muted">≈ ${fmt(expTWD(t,{amt:x.actual,mode:'local'}))} 台幣</span>`:''}
+          ${x.actual&&!x.expId?`<button class="icon" onclick="restockToExp('${x.id}')">帶入記帳</button>`:''}${x.expId?'<span class="badge okb">已入帳</span>':''}</div>
+        ${photoStripHTML('ritem',x)}
+      </div>
+      <button class="icon danger" onclick="del2(this,()=>restockDel('${x.id}'))" style="flex:none">✕</button></div>`).join('')
+      :`<p class="empty">還沒有補貨項目。按上面「📷 拍一樣」拍你要買的，或用下面的文字方式加。</p>`;
+    /* 文字方式（次要，摺疊） */
+    html+=`<div class="divider"></div>
+    <p class="hint" style="margin:0 0 8px">或用<b>文字</b>方式（想要純打勾清單、或套用固定清單時）：</p>
     <div class="row" style="margin-bottom:8px">
-      ${!t.restock.length&&store.restockTemplate.length?`<button class="btn ghost sm" onclick="restockApply()">套用我的固定清單（${store.restockTemplate.length} 項）</button>`:''}
+      ${store.restockTemplate.length?`<button class="btn ghost sm" onclick="restockApply()">套用我的固定清單（${store.restockTemplate.length} 項）</button>`:''}
       <button class="btn ghost sm" onclick="toggleRsImport()">📋 批次貼上（一行一項）</button>
-      ${t.restock.length?`<button class="icon" onclick="restockSaveTemplate()">把目前清單存成我的固定清單</button>`:''}</div>
+      ${t.restock.length?`<button class="icon" onclick="restockSaveTemplate()">存成我的固定清單</button>`:''}</div>
     <div id="rsImportBox" style="display:none;margin-bottom:12px">
       <textarea id="rsImportTa" placeholder="一行一項；要記數量就寫在逗號後面：&#10;面膜, 5盒&#10;常備藥&#10;咖啡, 2包"></textarea>
-      <div class="row" style="margin-top:6px"><button class="btn accent sm" onclick="rsImport()">匯入</button>
-      <span class="hint" style="margin:0">📷 拍照丟給我，我幫你讀成這個格式，你貼上就好。</span></div></div>
-    <div class="formbox"><div class="row">
-      <label class="field">品項<input type="text" id="rsItem" placeholder="面膜"></label>
-      <label class="field">數量／規格<input type="text" id="rsQty" placeholder="5 盒" style="width:110px;min-width:110px"></label>
-      <button class="btn accent" onclick="restockAdd()">加入</button></div></div>`;
-    html+=t.restock.length?t.restock.map(x=>`<div class="checkline ${x.done?'done':''}">
-      <input type="checkbox" ${x.done?'checked':''} onchange="restockTog('${x.id}')">
-      <span class="lbl"><b>${esc(x.item)}</b>${x.qty?` ×${esc(x.qty)}`:''}
-        ${x.actual?`／實花 <b>${fmt(x.actual)}</b> ${t.currency}`:''}
-        ${x.expId?'<span class="badge okb">已入帳</span>':''}</span>
-      <input class="qty" type="number" placeholder="花費" value="${x.actual||''}" onchange="restockActual('${x.id}',this.value)" style="width:80px;min-width:80px">
-      ${x.actual&&!x.expId?`<button class="icon" onclick="restockToExp('${x.id}')">帶入記帳</button>`:''}
-      <button class="icon danger" onclick="del2(this,()=>restockDel('${x.id}'))">✕</button></div>`).join('')
-      :`<p class="empty">還沒有補貨項目。${store.restockTemplate.length?'按上面「套用固定清單」帶入，或':''}在上面直接新增。</p>`;
+      <div class="row" style="margin-top:6px"><button class="btn accent sm" onclick="rsImport()">匯入</button></div></div>
+    <div class="row">
+      <input type="text" id="rsItem" placeholder="名稱＋色號" style="flex:1;min-width:120px">
+      <button class="btn ghost sm" onclick="restockAdd()">＋ 加一項</button></div>`;
   }
   html+=`</div>`;
   return html;
 }
 function restockAdd(){const t=T();const item=document.getElementById('rsItem').value.trim();if(!item)return;
-  const qty=document.getElementById('rsQty').value.trim();if(!t.restock)t.restock=[];
-  t.restock.push({id:uid(),item,qty,done:false,actual:0,expId:null});save();render()}
+  if(!t.restock)t.restock=[];
+  t.restock.push({id:uid(),item,qty:'',done:false,actual:0,expId:null,photos:[]});save();render()}
+async function restockShot(input){
+  const files=[...input.files];if(!files.length)return;
+  const t=T();if(!t.restock)t.restock=[];
+  const item={id:uid(),item:'',qty:'',done:false,actual:0,expId:null,photos:[]};
+  t.restock.unshift(item);
+  toast('處理照片中…');
+  for(const f of files){try{const d=await compressImage(f,1600,0.72);const pid=uid();await photoPut(pid,d);item.photos.push(pid)}catch(e){toast('這張存不了：'+e.message)}}
+  save();render();toast('已加一項，補上名字＋色號就好');
+}
+function restockRename(id,v){const x=T().restock.find(i=>i.id===id);if(x){x.item=v;save()}}
 function restockTog(id){const x=T().restock.find(i=>i.id===id);x.done=!x.done;save();render()}
 function restockActual(id,v){const x=T().restock.find(i=>i.id===id);if(x){x.actual=+v||0;save();render()}}
-function restockDel(id){const t=T();t.restock=t.restock.filter(i=>i.id!==id);save();render()}
+async function restockDel(id){const t=T();const x=t.restock.find(i=>i.id===id);
+  if(x&&x.photos)for(const pid of x.photos){try{await photoDelDB(pid)}catch(e){}}
+  t.restock=t.restock.filter(i=>i.id!==id);save();render()}
 function restockToExp(id){const t=T(),r=t.restock.find(x=>x.id===id);
-  const e={id:uid(),date:today(),desc:`${r.item}（補貨）`,cat:'購物',amt:r.actual,mode:'local',
+  const e={id:uid(),date:today(),desc:`${r.item||'補貨品'}（補貨）`,cat:'購物',amt:r.actual,mode:'local',
     payer:t.members[0]?t.members[0].id:'',parts:t.members.map(m=>m.id)};
   t.exp.push(e);r.expId=e.id;save();render();toast('已帶入記帳（付款人／參與者可到記帳頁調整）')}
 function restockApply(){const t=T();if(!t.restock)t.restock=[];
