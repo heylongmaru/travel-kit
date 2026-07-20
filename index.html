@@ -138,6 +138,12 @@ th{font-size:12px;color:var(--muted);font-weight:700}
 .right{margin-left:auto}
 .nowrap{white-space:nowrap}
 .money{font-weight:800;color:var(--ink)}
+.thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;background:var(--bg)}
+.photowrap{display:inline-block;position:relative;margin:4px 8px 4px 0;vertical-align:top}
+.photowrap .x{position:absolute;top:-7px;right:-7px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;padding:0}
+.addphoto{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:var(--accent);border:1px dashed var(--accent);border-radius:8px;padding:8px 12px;cursor:pointer;background:var(--accent-soft);vertical-align:top;margin-top:4px}
+#imgOverlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:80;padding:20px}
+#imgOverlay img{max-width:100%;max-height:86vh;border-radius:8px}
 </style>
 </head>
 <body>
@@ -152,6 +158,7 @@ th{font-size:12px;color:var(--muted);font-weight:700}
 </div>
 <div class="toast" id="toast"></div>
 <div class="tooltip" id="tooltip"></div>
+<div id="imgOverlay"></div>
 <script>
 'use strict';
 /* ================= 資料層 ================= */
@@ -224,6 +231,80 @@ function expTWD(t,e){return e.mode==='twd'?(+e.amt||0):Math.round((+e.amt||0)*ra
 function fmt(n){return (Math.round(n)).toLocaleString('zh-TW')}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function today(){return new Date().toISOString().slice(0,10)}
+/* ---------- 照片儲存（IndexedDB，可裝很多張；不上傳外部） ---------- */
+let _db=null;
+function idb(){return new Promise((res,rej)=>{
+  if(_db)return res(_db);
+  const r=indexedDB.open('travelkit-photos',1);
+  r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('photos'))db.createObjectStore('photos')};
+  r.onsuccess=e=>{_db=e.target.result;res(_db)};
+  r.onerror=e=>rej(e.target.error||new Error('IndexedDB 打不開'));
+})}
+function photoPut(id,dataUrl){return idb().then(db=>new Promise((res,rej)=>{
+  const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put(dataUrl,id);
+  tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)}))}
+function photoGet(id){return idb().then(db=>new Promise((res,rej)=>{
+  const tx=db.transaction('photos','readonly');const rq=tx.objectStore('photos').get(id);
+  rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error)}))}
+function photoDelDB(id){return idb().then(db=>new Promise((res)=>{
+  const tx=db.transaction('photos','readwrite');tx.objectStore('photos').delete(id);tx.oncomplete=()=>res()}))}
+function photoAll(){return idb().then(db=>new Promise((res)=>{
+  const tx=db.transaction('photos','readonly');const out={};const rq=tx.objectStore('photos').openCursor();
+  rq.onsuccess=e=>{const c=e.target.result;if(c){out[c.key]=c.value;c.continue()}else res(out)}}))}
+function compressImage(file,maxDim,quality){return new Promise((res,rej)=>{
+  const reader=new FileReader();
+  reader.onerror=()=>rej(new Error('讀不到檔'));
+  reader.onload=()=>{const img=new Image();
+    img.onerror=()=>rej(new Error('不是有效圖片'));
+    img.onload=()=>{let w=img.width,h=img.height;
+      if(w>h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim}
+      else if(h>maxDim){w=Math.round(w*maxDim/h);h=maxDim}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      res(cv.toDataURL('image/jpeg',quality))};
+    img.src=reader.result};
+  reader.readAsDataURL(file)})}
+function photosOf(kind,id){const t=T();const arr=kind==='book'?t.bookings:t.qr;const o=arr.find(x=>x.id===id);if(o&&!o.photos)o.photos=[];return o}
+function photoStripHTML(kind,o){
+  const pics=(o.photos||[]).map(pid=>
+    `<span class="photowrap"><img class="thumb" data-pid="${pid}" alt="附件" onclick="viewPhoto('${pid}')">`+
+    `<button class="x" title="刪除" onclick="delPhotoAsk('${kind}','${o.id}','${pid}')">✕</button></span>`).join('');
+  return `<div style="margin-top:8px">${pics}<label class="addphoto">📷 加照片`+
+    `<input type="file" accept="image/*" style="display:none" onchange="addPhoto('${kind}','${o.id}',this)"></label></div>`;
+}
+async function addPhoto(kind,id,input){
+  const files=[...input.files];if(!files.length)return;
+  const o=photosOf(kind,id);if(!o){toast('找不到這筆');return}
+  if(!o.photos)o.photos=[];
+  toast('處理照片中…');
+  for(const f of files){
+    try{const dataUrl=await compressImage(f,1600,0.72);const pid=uid();await photoPut(pid,dataUrl);o.photos.push(pid)}
+    catch(e){toast('這張存不了：'+e.message)}
+  }
+  save();render();toast('照片已存進工具');
+}
+let pendingPhoto=null;
+function delPhotoAsk(kind,id,pid){
+  if(pendingPhoto&&pendingPhoto.pid===pid){clearTimeout(pendingPhoto.t);pendingPhoto=null;delPhoto(kind,id,pid);return}
+  if(pendingPhoto)clearTimeout(pendingPhoto.t);
+  toast('再點一次紅點✕刪除這張照片');
+  pendingPhoto={pid,t:setTimeout(()=>{pendingPhoto=null},3000)};
+}
+async function delPhoto(kind,id,pid){
+  const o=photosOf(kind,id);if(o)o.photos=(o.photos||[]).filter(x=>x!==pid);
+  await photoDelDB(pid);save();render();toast('已刪除照片');
+}
+async function viewPhoto(pid){
+  let d;try{d=await photoGet(pid)}catch(e){}
+  if(!d){toast('讀不到這張照片');return}
+  const ov=document.getElementById('imgOverlay');
+  ov.innerHTML=`<img src="${d}" alt="附件"><div class="hint" style="color:#fff;margin:0">點任意處關閉</div>`;
+  ov.style.display='flex';ov.onclick=()=>{ov.style.display='none';ov.innerHTML=''};
+}
+async function bindPhotos(){
+  const imgs=document.querySelectorAll('img[data-pid]');
+  for(const im of imgs){try{const d=await photoGet(im.dataset.pid);if(d)im.src=d}catch(e){}}
+}
 function catColor(cat){
   const i=store.cats.indexOf(cat);
   return i>=0&&i<CHART_COLORS.length?CHART_COLORS[i]:OTHER_COLOR;
@@ -257,6 +338,7 @@ function render(){
   const fn={home:vHome,itin:vItin,book:vBook,pack:vPack,exp:vExp,gift:vGift,net:vNet,emg:vEmg,stat:vStat,set:vSet}[cur];
   v.innerHTML=fn();
   if(cur==='stat')bindChartHover();
+  bindPhotos();
 }
 function noTripHTML(){return `<div class="card"><h2>還沒有旅程</h2>
   <p class="hint">先到「總覽」建立一趟旅程，所有功能就會開起來。</p>
@@ -424,7 +506,7 @@ function vBook(){
   const t=T();
   const S={'已訂':'okb','待訂':'manual','比較中':'auto'};
   let html=`<div class="card"><h2>訂票＆住宿總覽</h2>
-  <p class="hint">確認信（Email PDF、截圖）統一丟進這趟旅程的附件資料夾：<b>03-travel-kit/trips/${esc(t.name)}/</b>，這裡記摘要與檔名就好。</p>
+  <p class="hint">確認信截圖可直接用每筆下方的「📷 加照片」存進工具（存在你裝置本機、不上傳外部）。</p>
   <button class="btn accent sm" onclick="bookFormShow()">＋ 新增一筆</button><div id="bookForm"></div></div>`;
   ['機票','住宿','交通','票券','其他'].forEach(type=>{
     const rows=t.bookings.filter(b=>b.type===type);
@@ -436,7 +518,8 @@ function vBook(){
           ${b.src?`<span class="chip">${esc(b.src)}</span>`:''}</div>
         <div class="s">${b.date?'📅 '+esc(b.date)+'　':''}${b.conf?'確認編號：<b>'+esc(b.conf)+'</b>　':''}
         ${b.addr?esc(b.addr)+'　':''}${b.addrL?`<span class="chip cls">當地語：${esc(b.addrL)}</span>　`:''}
-        ${b.file?'📎 '+esc(b.file)+'　':''}${b.note?esc(b.note):''}</div></div>
+        ${b.file?'📎 '+esc(b.file)+'　':''}${b.note?esc(b.note):''}</div>
+        ${photoStripHTML('book',b)}</div>
         <button class="icon" onclick="bookFormShow('${b.id}')">✎</button>
         <button class="icon danger" onclick="del2(this,()=>bookDel('${b.id}'))">✕</button></div>`;
     });
@@ -471,6 +554,8 @@ function bookSave(){
     addr:document.getElementById('bkAddr').value.trim(),addrL:document.getElementById('bkAddrL').value.trim(),
     file:document.getElementById('bkFile').value.trim(),note:document.getElementById('bkNote').value.trim()};
   if(!obj.title){toast('名稱必填');return}
+  const prevB=bookEdit?t.bookings.find(x=>x.id===bookEdit):null;
+  obj.photos=prevB&&prevB.photos?prevB.photos:[];/* 編輯時保留已存照片 */
   if(bookEdit){const i=t.bookings.findIndex(x=>x.id===bookEdit);t.bookings[i]=obj}else t.bookings.push(obj);
   save();render();toast('已儲存');
 }
@@ -751,10 +836,11 @@ function vNet(){
   html+=`<label class="field" style="margin-top:10px">到當地的設定步驟（大家共用）
     <textarea onchange="simSetup(this.value)" placeholder="1. 關 Wi-Fi 通話  2. 啟用 eSIM  3. 開資料漫遊…">${esc(t.sim.setup)}</textarea></label></div>`;
   html+=`<div class="card"><h2>🛂 入境文件／QR</h2>
-  <p class="hint">QR 截圖、PDF 放這趟的附件資料夾 <b>03-travel-kit/trips/${esc(t.name)}/</b>；這裡放連結與備註，起飛前點開檢查一次。</p>`;
+  <p class="hint">入境 QR 截圖可用下方「📷 加照片」直接存進工具；起飛前點開檢查一次。</p>`;
   html+=t.qr.map(q=>`<div class="item"><div class="grow">
     <div class="t">${q.url?`<a href="${esc(q.url)}" target="_blank">${esc(q.name)}</a>`:esc(q.name)}</div>
-    <div class="s">${esc(q.note||'')}</div></div>
+    <div class="s">${esc(q.note||'')}</div>
+    ${photoStripHTML('qr',q)}</div>
     <button class="icon danger" onclick="del2(this,()=>qrDel('${q.id}'))">✕</button></div>`).join('');
   html+=`<div class="row" style="margin-top:8px">
     <label class="field">名稱<input type="text" id="qrName" placeholder="K-ETA"></label>
@@ -926,7 +1012,7 @@ function vSet(){
   <h2>備份／還原</h2><div class="row">
     <button class="btn ghost sm" onclick="exportJSON()">⬇️ 匯出全部資料（JSON 備份）</button>
     <label class="btn ghost sm" style="display:inline-block">⬆️ 匯入備份<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>
-  <p class="hint" style="margin-top:8px">資料存在這台裝置的瀏覽器裡。換裝置、給家人裝，就用匯出／匯入。建議每趟旅行結束匯出一份 JSON 放到這趟的附件資料夾。</p></div>`;
+  <p class="hint" style="margin-top:8px">資料（含你存的照片）都在這台裝置。換裝置、給家人裝，就用匯出／匯入——備份檔已包含照片。建議每趟旅行結束匯出一份留存。</p></div>`;
   return html;
 }
 function tripSet(k,v){T()[k]=v;save();render()}
@@ -940,17 +1026,25 @@ function presetAdd(ci){const c=store.cats[ci],el=document.getElementById('np-'+c
   if(!store.presetItems[c])store.presetItems[c]=[];
   if(!store.presetItems[c].includes(v))store.presetItems[c].push(v);save();render()}
 function presetDel(ci,i){const c=store.cats[ci];if(store.presetItems[c])store.presetItems[c].splice(i,1);save();render()}
-function exportJSON(){
-  const blob=new Blob([JSON.stringify(store,null,1)],{type:'application/json'});
+async function exportJSON(){
+  toast('打包中（含照片）…');
+  let photos={};try{photos=await photoAll()}catch(e){}
+  const blob=new Blob([JSON.stringify({_v:'travelkit-backup-1',store,photos})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='travelkit-backup-'+today()+'.json';a.click();toast('已匯出備份');
+  a.download='travelkit-backup-'+today()+'.json';a.click();toast('已匯出備份（含照片）');
 }
 function importJSON(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{try{const j=JSON.parse(r.result);
-    if(!j.trips||!j.order)throw new Error('不是本工具的備份檔');
-    store=j;save();render();toast('已還原備份')}catch(e){toast('匯入失敗：'+e.message)}};
+  r.onload=async()=>{try{const j=JSON.parse(r.result);
+    let s,photos;
+    if(j.store&&j.photos!==undefined){s=j.store;photos=j.photos||{}}       /* 新格式：含照片 */
+    else if(j.trips&&j.order){s=j;photos={}}                               /* 舊格式：純資料 */
+    else throw new Error('不是本工具的備份檔');
+    store=s;save();
+    for(const [pid,d] of Object.entries(photos)){try{await photoPut(pid,d)}catch(e){}}
+    render();toast('已還原備份'+(Object.keys(photos).length?'（含照片）':''))}
+    catch(e){toast('匯入失敗：'+e.message)}};
   r.readAsText(f);
 }
 /* ================= 分享頁匯出 ================= */
