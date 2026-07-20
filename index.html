@@ -808,7 +808,12 @@ function vGift(){
     <p class="hint">每趟去日本幫自己補的自用品。可套用你的固定清單、每趟重複用，買到打勾、實花一鍵帶入記帳。</p>
     <div class="row" style="margin-bottom:8px">
       ${!t.restock.length&&store.restockTemplate.length?`<button class="btn ghost sm" onclick="restockApply()">套用我的固定清單（${store.restockTemplate.length} 項）</button>`:''}
+      <button class="btn ghost sm" onclick="toggleRsImport()">📋 批次貼上（一行一項）</button>
       ${t.restock.length?`<button class="icon" onclick="restockSaveTemplate()">把目前清單存成我的固定清單</button>`:''}</div>
+    <div id="rsImportBox" style="display:none;margin-bottom:12px">
+      <textarea id="rsImportTa" placeholder="一行一項；要記數量就寫在逗號後面：&#10;面膜, 5盒&#10;常備藥&#10;咖啡, 2包"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn accent sm" onclick="rsImport()">匯入</button>
+      <span class="hint" style="margin:0">📷 拍照丟給我，我幫你讀成這個格式，你貼上就好。</span></div></div>
     <div class="formbox"><div class="row">
       <label class="field">品項<input type="text" id="rsItem" placeholder="面膜"></label>
       <label class="field">數量／規格<input type="text" id="rsQty" placeholder="5 盒" style="width:110px;min-width:110px"></label>
@@ -840,6 +845,16 @@ function restockApply(){const t=T();if(!t.restock)t.restock=[];
   store.restockTemplate.forEach(name=>{if(!t.restock.some(x=>x.item===name))t.restock.push({id:uid(),item:name,qty:'',done:false,actual:0,expId:null})});
   save();render();toast('已套用你的固定補貨清單')}
 function restockSaveTemplate(){const t=T();store.restockTemplate=[...new Set(t.restock.map(x=>x.item))];save();render();toast('已存成固定清單，下趟可直接套用')}
+function toggleRsImport(){const b=document.getElementById('rsImportBox');b.style.display=b.style.display==='none'?'block':'none'}
+function rsImport(){const t=T();if(!t.restock)t.restock=[];
+  const lines=document.getElementById('rsImportTa').value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  let n=0;
+  lines.forEach(line=>{const parts=line.split(/[,，]/);const item=parts[0].trim();if(!item)return;
+    const qty=parts.slice(1).join('，').trim();
+    t.restock.push({id:uid(),item,qty,done:false,actual:0,expId:null});n++});
+  if(!n){toast('沒讀到項目');return}
+  save();render();toast(`已匯入 ${n} 項`);
+}
 function giftSave(){
   const t=T();
   const obj={id:giftEdit||uid(),who:document.getElementById('gfWho').value.trim(),
