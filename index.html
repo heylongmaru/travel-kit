@@ -158,6 +158,18 @@ th{font-size:12px;color:var(--muted);font-weight:700}
 const LS_KEY='travelkit-v1';
 const uid=()=> 't'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
 const DEFAULT_CATS=['餐飲','甜點','御朱印','交通','住宿','門票','購物','伴手禮','其他'];
+/* 每個分類的快速項目（點一下就填入「項目」，免手打）；可在設定自訂 */
+const DEFAULT_PRESET_ITEMS={
+ '餐飲':['早餐','午餐','晚餐','飲料','咖啡','拉麵','壽司','宵夜'],
+ '甜點':['蛋糕','冰淇淋','和菓子','鬆餅','聖代'],
+ '御朱印':['御朱印'],
+ '交通':['電車','地鐵','JR','新幹線','計程車','巴士','IC卡儲值'],
+ '住宿':['住宿','溫泉旅館'],
+ '門票':['門票','入場券','展覽'],
+ '購物':['藥妝','衣服','電器','超市','扭蛋'],
+ '伴手禮':['伴手禮','名產','零食'],
+ '其他':['寄物櫃','網卡','雜費']
+};
 const CHART_COLORS=['#0e8aa6','#d0762a','#9155c9','#cc4f6d','#476cd6'];
 const OTHER_COLOR='#6b7683';
 const SLOTS=[['morning','上午'],['afternoon','下午'],['evening','晚上']];
@@ -186,6 +198,7 @@ function load(){
   try{store=JSON.parse(localStorage.getItem(LS_KEY))||null}catch(e){store=null}
   if(!store) store={trips:{},order:[],activeId:null,cats:DEFAULT_CATS.slice()};
   if(!store.cats||!store.cats.length) store.cats=DEFAULT_CATS.slice();
+  if(!store.presetItems) store.presetItems=JSON.parse(JSON.stringify(DEFAULT_PRESET_ITEMS));
 }
 function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(store))}catch(e){toast('⚠️ 儲存失敗：'+e.message)}}
 function T(){return store.activeId?store.trips[store.activeId]:null}
@@ -562,6 +575,7 @@ function expFormHTML(t,e){
     ${store.cats.map(c=>`<span class="chip btnchip ${'exCat'===''?'':''}" data-cat="${esc(c)}" onclick="pickCat(this)"
       style="${(e.cat||store.cats[0])===c?'background:var(--accent-soft);color:var(--accent);border-color:transparent':''}">${esc(c)}</span>`).join('')}
     <input type="hidden" id="exCat" value="${esc(e.cat||store.cats[0])}"></div>
+  <div id="presetItems" style="margin:2px 0 8px">${presetHTML(e.cat||store.cats[0])}</div>
   <div style="margin:6px 0"><span class="hint" style="margin:0">誰參與這筆（均分）：</span>
     ${t.members.map(m=>`<label class="switch"><input type="checkbox" class="exPart" value="${m.id}"
       ${!e.parts||e.parts.includes(m.id)?'checked':''}> ${esc(m.name)}</label>`).join('　')}</div>
@@ -573,7 +587,15 @@ function pickCat(el){
   document.getElementById('exCat').value=el.dataset.cat;
   el.parentElement.querySelectorAll('.chip').forEach(c=>c.style.cssText='');
   el.style.cssText='background:var(--accent-soft);color:var(--accent);border-color:transparent';
+  const pi=document.getElementById('presetItems');if(pi)pi.innerHTML=presetHTML(el.dataset.cat);
 }
+function presetHTML(cat){
+  const items=(store.presetItems&&store.presetItems[cat])||[];
+  if(!items.length)return'';
+  return '<span class="hint" style="margin:0">快速項目：</span>'+
+    items.map(n=>`<span class="chip btnchip" onclick="pickItem(this)" data-name="${esc(n)}">${esc(n)}</span>`).join('');
+}
+function pickItem(el){document.getElementById('exDesc').value=el.dataset.name;}
 function expSave(){
   const t=T();
   const parts=[...document.querySelectorAll('.exPart:checked')].map(x=>x.value);
@@ -894,6 +916,13 @@ function vSet(){
       <a href="javascript:void(0)" onclick="catDel(${i})" style="text-decoration:none">✕</a></span>`).join('')}</div>
     <div class="row" style="margin-top:8px"><input type="text" id="ncCat" placeholder="新分類（例：溫泉）">
     <button class="btn ghost sm" onclick="catAdd()">＋ 加分類</button></div><div class="divider"></div>
+  <h2>快速項目（記帳時點一下就填，免手打）</h2>
+  <p class="hint" style="margin:0 0 6px">每個分類的常用項目，可自己增減。</p>`;
+  store.cats.forEach((c,ci)=>{
+    const items=(store.presetItems&&store.presetItems[c])||[];
+    html+=`<div style="margin:6px 0"><b style="font-size:13px">${esc(c)}</b>　${items.map((n,i)=>`<span class="chip">${esc(n)} <a href="javascript:void(0)" onclick="presetDel(${ci},${i})" style="text-decoration:none">✕</a></span>`).join('')}<input type="text" id="np-${ci}" placeholder="新項目" style="min-width:90px;width:110px"><button class="icon" onclick="presetAdd(${ci})">＋</button></div>`;
+  });
+  html+=`<div class="divider"></div>
   <h2>備份／還原</h2><div class="row">
     <button class="btn ghost sm" onclick="exportJSON()">⬇️ 匯出全部資料（JSON 備份）</button>
     <label class="btn ghost sm" style="display:inline-block">⬆️ 匯入備份<input type="file" accept=".json" style="display:none" onchange="importJSON(this)"></label></div>
@@ -905,8 +934,12 @@ function memAdd(){const v=document.getElementById('nmName').value.trim();if(!v)r
   T().members.push({id:uid(),name:v,transport:'高鐵',emgContact:'',blood:'',allergy:''});save();render()}
 function memDel(id){const t=T();t.members=t.members.filter(m=>m.id!==id);delete t.pack[id];save();render()}
 function catAdd(){const v=document.getElementById('ncCat').value.trim();if(!v||store.cats.includes(v))return;
-  store.cats.push(v);save();render()}
+  store.cats.push(v);if(!store.presetItems[v])store.presetItems[v]=[];save();render()}
 function catDel(i){store.cats.splice(i,1);save();render()}
+function presetAdd(ci){const c=store.cats[ci],el=document.getElementById('np-'+ci),v=el.value.trim();if(!v)return;
+  if(!store.presetItems[c])store.presetItems[c]=[];
+  if(!store.presetItems[c].includes(v))store.presetItems[c].push(v);save();render()}
+function presetDel(ci,i){const c=store.cats[ci];if(store.presetItems[c])store.presetItems[c].splice(i,1);save();render()}
 function exportJSON(){
   const blob=new Blob([JSON.stringify(store,null,1)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
